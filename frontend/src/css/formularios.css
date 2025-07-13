@@ -1,0 +1,78 @@
+/* formularios.css - estilos generales para todos los formularios del sistema */
+
+.formulario-container {
+  max-width: 860px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #F5F5F5;
+  border: 1px solid #CCCCCC;
+  border-radius: 8px;
+  font-family: "Roboto", sans-serif;
+  color: #1E1E1E;
+}
+
+.formulario-container h4 {
+  font-size: 1.5rem;
+  margin-bottom: 1.2rem;
+  color: #0055A5;
+}
+
+.formulario-container label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  color: #1E1E1E;
+}
+
+.formulario-container select,
+.formulario-container input,
+.formulario-container textarea {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid #CCCCCC;
+  border-radius: 4px;
+  background-color: #ffffff;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.formulario-container textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.formulario-container button {
+  margin-top: 1.5rem;
+  padding: 0.6rem 1.5rem;
+  background-color: #0055A5;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.formulario-container button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+}
+
+.formulario-container button:hover:not(:disabled) {
+  background-color: #004080;
+}
+
+.mensaje {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #D2121A;
+}
+
+.map-wrapper {
+  height: 400px;
+  margin-top: 2rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #CCCCCC;
+}

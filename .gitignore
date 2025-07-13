@@ -1,25 +1,36 @@
-# Node.js
-node_modules/
-build/
-dist/
+# ⚙️ Archivos de entorno
 .env
+.env.local
+frontend/.env
+backend/.env
 
-# Python
+# 🔐 Claves sensibles (Firebase u otros)
+backend/app/utils/firebase_key.json
+
+# 🐍 Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-env/
-venv/
-.env
-
-# React
+*.py[cod]
+*.sqlite3
 *.log
-.cache/
-coverage/
+*.db
 
-# IDEs y sistema
+# 📦 Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 📁 Vite / React / CRA build
+frontend/build/
+dist/
+.cache/
+.DS_Store
+
+# 🔧 VSCode y editor config
 .vscode/
 .idea/
-.DS_Store
 *.swp
+
+# 🙅 Otros
+*.bak
+*.tmp

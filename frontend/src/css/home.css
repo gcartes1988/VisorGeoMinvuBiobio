@@ -1,0 +1,276 @@
+/* Estructura principal */
+.visor-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100%;
+  font-family: var(--font-base);
+  background-color: var(--neutral);
+}
+
+/* Sidebar izquierdo */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background-color: var(--white);
+  border-right: 1px solid var(--accent);
+  padding: 20px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  transition: width 0.3s ease;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.sidebar.minimizada {
+  width: 65px;
+  padding: 10px 10px;
+}
+
+.sidebar-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: var(--black);
+}
+
+.btn-buscar {
+  padding: 8px 12px;
+  background-color: var(--primary);
+  border: none;
+  border-radius: 6px;
+  color: var(--white);
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-buscar:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Botón de minimización */
+.toggle-sidebar {
+  position: absolute;
+  top: 30px;
+  right: 20px;
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: var(--white);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10001;
+}
+
+@media (max-width: 768px) {
+  .btn-sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 16px;
+    background-color: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+  }
+}
+
+/* Mapa */
+.mapa {
+  flex-grow: 1;
+  position: relative;
+  height: 100vh;
+}
+
+.map-wrapper {
+  height: 100vh;
+  width: 100%;
+}
+
+.leaflet-top.leaflet-right .leaflet-control {
+  margin-top: 80px;
+}
+
+.leaflet-control button {
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Controles de zoom personalizados */
+.zoom-control-custom {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.zoom-control-custom a {
+  text-align: center;
+  text-decoration: none;
+  color: var(--black);
+  font-size: 20px;
+  padding: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.zoom-control-custom a:hover {
+  background-color: var(--neutral);
+}
+
+/* Estado búsqueda */
+.estado-busqueda {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #ffffffcc;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--gray-a);
+}
+
+/* Toast */
+.toast-mensaje {
+  position: absolute;
+  bottom: 30px;
+  right: 60px;
+  background-color: var(--white);
+  border: 1px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--black);
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toast-mensaje button {
+  margin-left: 10px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--gray-b);
+}
+
+/* Barra superior derecha */
+.topbar.right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 500;
+}
+
+/* Botón admin */
+.btn-admin {
+  background-color: var(--gray-a);
+  color: var(--white);
+  padding: 8px 14px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.btn-admin:hover {
+  background-color: var(--black);
+}
+
+/* Botón filtros */
+.btn-filtros {
+  background-color: var(--tertiary);
+  color: var(--white);
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-filtros:hover {
+  background-color: #06132f;
+}
+
+/* Botón reset map */
+.btn-reset-map {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: var(--white);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 1000;
+  font-size: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.minimizada {
+    transform: translateX(-215px); /* deja visible solo el botón de 65px aprox */
+  }
+
+  .toggle-sidebar {
+    position: fixed;       /* 🔥 Fijo en pantalla */
+    top: 20px;
+    left: 10px;
+    z-index: 1100;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+}
+
+
+
+
+
+/* Buscador */
+.buscador-proyectos {
+  margin-bottom: 12px;
+}
+
+.buscador-proyectos input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--gray-b);
+  border-radius: 6px;
+  font-size: 14px;
+}
