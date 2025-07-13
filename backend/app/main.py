@@ -32,10 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rutas
+# Rutas principales
 app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])
 app.include_router(proyecto.router, prefix="/api", tags=["Proyectos"])
-app.include_router(pavimento.router, prefix="/api", tags=["Pavimentos"])  # ✅ ÚNICO TAG
+app.include_router(pavimento.router, prefix="/api", tags=["Pavimentos"])
 app.include_router(ciclovia.router, prefix="/api", tags=["Ciclovías"])
 app.include_router(parque.router, prefix="/api", tags=["Parques Urbanos"])
 app.include_router(categoria.router, prefix="/api", tags=["Categorías"])
@@ -61,7 +61,16 @@ def get_estado_avance(db: Session = Depends(get_db)):
 def get_contratistas(db: Session = Depends(get_db)):
     return db.query(Contratista).all()
 
-# OpenAPI personalizado
+# Ruta raíz para estado del backend
+@app.get("/", tags=["Estado"])
+def root_status():
+    return {
+        "VisorGeo": "Minvu Biobío",
+        "estado": "✅ API en línea",
+        "documentación": "https://visorgeominvubiobio.onrender.com/docs"
+    }
+
+# OpenAPI personalizado con JWT
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
