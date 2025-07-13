@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+build/
+dist/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.env
+
+# React
+*.log
+.cache/
+coverage/
+
+# IDEs y sistema
+.vscode/
+.idea/
+.DS_Store
+*.swp
