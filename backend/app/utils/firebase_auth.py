@@ -1,24 +1,23 @@
-# app/utils/firebase_auth.py
 import os
 import json
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials, initialize_app, auth
 
-# 🔐 Leer clave de Firebase desde variable de entorno
-firebase_key_json = os.getenv("FIREBASE_KEY_JSON")
-if not firebase_key_json:
-    raise ValueError("Falta la variable de entorno FIREBASE_KEY_JSON")
-
-# 🔐 Convertir el string JSON a dict
-firebase_creds = json.loads(firebase_key_json)
-
-# 🔐 Inicializar Firebase si aún no está inicializado
+# Inicialización
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_creds)
-    firebase_admin.initialize_app(cred)
+    config_str = os.getenv("FIREBASE_CONFIG_JSON")
+    if not config_str:
+        raise ValueError("❌ Variable FIREBASE_CONFIG_JSON no encontrada")
 
-def verify_token(id_token: str):
+    firebase_config = json.loads(config_str)
+    firebase_config["private_key"] = firebase_config["private_key"].replace("\\n", "\n")
+    cred = credentials.Certificate(firebase_config)
+    initialize_app(cred)
+
+# Verificación del token
+def verify_token(token: str):
     try:
-        return auth.verify_id_token(id_token)
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token
     except Exception as e:
-        raise ValueError(f"Token inválido: {e}")
+        raise Exception(f"Token inválido: {str(e)}")
