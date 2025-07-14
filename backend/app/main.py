@@ -41,7 +41,7 @@ app.include_router(parque.router, prefix="/api", tags=["Parques Urbanos"])
 app.include_router(categoria.router, prefix="/api", tags=["Categorías"])
 app.include_router(provincia.router, prefix="/api", tags=["Provincias"])
 app.include_router(comuna.router, prefix="/api", tags=["Comunas"])
-app.include_router(auth.router, tags=["Auth"])
+app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(log_cambios.router, tags=["Log de Cambios"])
 
 # Endpoints referenciales
