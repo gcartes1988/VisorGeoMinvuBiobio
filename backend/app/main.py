@@ -27,8 +27,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000",
-                   "https://visor-geo-minvu-biobio-sigma.vercel.app", 
-                   "https://visor-geo-minvu-biobio-8ozh4w6vx-gustavos-projects-4cace440.vercel.app/" ],
+                   "https://visor-geo-minvu-biobio-sigma.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
