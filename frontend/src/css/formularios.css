@@ -25,6 +25,10 @@
   color: #1E1E1E;
 }
 
+select {
+  height: auto;
+}
+
 .formulario-container select,
 .formulario-container input,
 .formulario-container textarea {

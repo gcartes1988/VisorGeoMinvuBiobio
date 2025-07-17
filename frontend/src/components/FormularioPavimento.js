@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Select from 'react-select';
 import api from '../services/api';
 import { validarLineString } from '../utils/validarGeoJSON';
 import { useParams } from "react-router-dom";
@@ -7,12 +8,12 @@ import VistaPreviaGeojson from '../components/VistaPreviaGeojson';
 const FormularioPavimento = ({ proyectoId, modoEdicion = false }) => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
-    comuna_id: '',
+    comuna: null,
     sector: '',
     longitud_metros: '',
-    tipo_calzada_id: '',
-    tipo_pavimento_id: '',
-    estado_avance_id: '',
+    tipo_calzada: null,
+    tipos_pavimento: [],
+    estado_avance: null,
     geometria: JSON.stringify({
       type: "LineString",
       coordinates: [
@@ -39,26 +40,28 @@ const FormularioPavimento = ({ proyectoId, modoEdicion = false }) => {
 
   useEffect(() => {
     if (modoEdicion && id) {
-      api.get(`/pavimentos/${id}`)
-        .then(res => {
-          const pav = res.data;
-          setFormData({
-            comuna_id: pav.comuna?.id?.toString() || '',
-            sector: pav.sector || '',
-            longitud_metros: pav.longitud_metros?.toString() || '',
-            tipo_calzada_id: pav.tipo_calzada_id?.toString() || '',
-            tipo_pavimento_id: pav.tipo_pavimento_id?.toString() || '',
-            estado_avance_id: pav.estado_avance?.id?.toString() || '',
-            geometria: JSON.stringify(pav.geometria, null, 2)
-          });
-          setGeoValido(true);
-        })
-        .catch(err => {
-          console.error("Error al cargar pavimento:", err);
-          setMensaje("❌ Error al cargar los datos del pavimento.");
+      api.get(`/pavimentos/${id}`).then(res => {
+        const pav = res.data;
+        setFormData({
+          comuna: pav.comuna ? { value: pav.comuna.id, label: pav.comuna.nombre } : null,
+          sector: pav.sector || '',
+          longitud_metros: pav.longitud_metros?.toString() || '',
+          tipo_calzada: pav.tipo_calzada_id
+            ? { value: pav.tipo_calzada_id, label: tiposCalzada.find(tc => tc.id === pav.tipo_calzada_id)?.nombre || '' }
+            : null,
+          tipos_pavimento: pav.tipos_pavimento?.map(tp => ({ value: tp.id, label: tp.nombre })) || [],
+          estado_avance: pav.estado_avance
+            ? { value: pav.estado_avance.id, label: pav.estado_avance.nombre }
+            : null,
+          geometria: JSON.stringify(pav.geometria, null, 2)
         });
+        setGeoValido(true);
+      }).catch(err => {
+        console.error("Error al cargar pavimento:", err);
+        setMensaje("❌ Error al cargar los datos del pavimento.");
+      });
     }
-  }, [modoEdicion, id]);
+  }, [modoEdicion, id, tiposCalzada]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,22 +87,23 @@ const FormularioPavimento = ({ proyectoId, modoEdicion = false }) => {
     }
 
     const payload = {
-      comuna_id: parseInt(formData.comuna_id),
+      comuna_id: formData.comuna?.value,
       sector: formData.sector,
       longitud_metros: parseFloat(formData.longitud_metros),
-      tipo_calzada_id: parseInt(formData.tipo_calzada_id),
-      tipo_pavimento_id: parseInt(formData.tipo_pavimento_id),
-      estado_avance_id: parseInt(formData.estado_avance_id),
-      geometria: geoObjeto
+      tipo_calzada_id: formData.tipo_calzada?.value,
+      tipos_pavimento: formData.tipos_pavimento.map(p => p.value),
+      estado_avance_id: formData.estado_avance?.value,
+      geometria: JSON.stringify(geoObjeto), 
+      proyecto_id: proyectoId
     };
+
+    console.log("📦 DATOS ENVIADOS AL BACKEND:", payload);
 
     try {
       if (modoEdicion && id) {
-        payload.proyecto_id = proyectoId; // 👈 Agrega esto
         await api.put(`/pavimentos/${id}`, payload);
         setMensaje("✏️ Pavimento actualizado con éxito.");
       } else {
-        payload.proyecto_id = proyectoId;
         await api.post('/pavimentos', payload);
         setMensaje("✅ Pavimento creado con éxito.");
       }
@@ -113,35 +117,47 @@ const FormularioPavimento = ({ proyectoId, modoEdicion = false }) => {
     <div className="formulario-container">
       <h3>{modoEdicion ? 'Editar Pavimento' : 'Agregar Pavimento'}</h3>
       <form onSubmit={handleSubmit}>
-        <label>Comuna:</label><br />
-        <select name='comuna_id' value={formData.comuna_id} onChange={handleChange} required>
-          <option value=''>Seleccionar comuna</option>
-          {comunas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-        </select><br />
+        <label>Comuna:</label>
+        <Select
+          options={comunas.map(c => ({ value: c.id, label: c.nombre }))}
+          value={formData.comuna}
+          onChange={selected => setFormData(prev => ({ ...prev, comuna: selected }))}
+          placeholder="Seleccionar comuna"
+          isClearable
+        />
 
-        <label>Sector:</label><br />
-        <input type="text" name="sector" value={formData.sector} onChange={handleChange} required /><br />
+        <label>Sector:</label>
+        <input type="text" name="sector" value={formData.sector} onChange={handleChange} required />
 
-        <label>Longitud (m):</label><br />
-        <input type="number" name="longitud_metros" value={formData.longitud_metros} onChange={handleChange} required /><br />
+        <label>Longitud (m):</label>
+        <input type="number" name="longitud_metros" value={formData.longitud_metros} onChange={handleChange} required />
 
-        <label>Tipo de Calzada:</label><br />
-        <select name='tipo_calzada_id' value={formData.tipo_calzada_id} onChange={handleChange} required>
-          <option value=''>Seleccionar tipo</option>
-          {tiposCalzada.map(tc => <option key={tc.id} value={tc.id}>{tc.nombre}</option>)}
-        </select><br />
+        <label>Tipo de Calzada:</label>
+        <Select
+          options={tiposCalzada.map(tc => ({ value: tc.id, label: tc.nombre }))}
+          value={formData.tipo_calzada}
+          onChange={selected => setFormData(prev => ({ ...prev, tipo_calzada: selected }))}
+          placeholder="Seleccionar tipo"
+          isClearable
+        />
 
-        <label>Tipo de Pavimento:</label><br />
-        <select name='tipo_pavimento_id' value={formData.tipo_pavimento_id} onChange={handleChange} required>
-          <option value=''>Seleccionar tipo</option>
-          {tiposPavimento.map(tp => <option key={tp.id} value={tp.id}>{tp.nombre}</option>)}
-        </select><br />
+        <label>Tipos de Pavimento:</label>
+        <Select
+          options={tiposPavimento.map(tp => ({ value: tp.id, label: tp.nombre }))}
+          value={formData.tipos_pavimento}
+          onChange={selected => setFormData(prev => ({ ...prev, tipos_pavimento: selected }))}
+          placeholder="Seleccionar tipos"
+          isMulti
+        />
 
-        <label>Estado de Avance:</label><br />
-        <select name='estado_avance_id' value={formData.estado_avance_id} onChange={handleChange} required>
-          <option value=''>Seleccionar estado</option>
-          {estadosAvance.map(ea => <option key={ea.id} value={ea.id}>{ea.nombre}</option>)}
-        </select><br />
+        <label>Estado de Avance:</label>
+        <Select
+          options={estadosAvance.map(ea => ({ value: ea.id, label: ea.nombre }))}
+          value={formData.estado_avance}
+          onChange={selected => setFormData(prev => ({ ...prev, estado_avance: selected }))}
+          placeholder="Seleccionar estado"
+          isClearable
+        />
 
         <label htmlFor="geometria">Geometría (GeoJSON - LineString):</label>
         <textarea
@@ -163,7 +179,6 @@ const FormularioPavimento = ({ proyectoId, modoEdicion = false }) => {
             : '❌ Verifica el formato del GeoJSON.'}
         </small>
 
-        <br />
         <VistaPreviaGeojson geojsonStr={formData.geometria} />
 
         <button type="submit">{modoEdicion ? 'Actualizar' : 'Guardar'} Pavimento</button>
