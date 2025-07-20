@@ -1,13 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional, Union, Dict, Any
+from typing import Optional
+from app.schemas.comuna import ComunaOut
+from app.schemas.estado_avance import EstadoAvanceOut
+from app.schemas.tipo_ciclovia import TipoCicloviaOut
 
-class CicloviaCreate(BaseModel):
-    proyecto_id: int
-    tipo_ciclovia_id: int
-    comuna_id: int  # 🟣 Nueva relación directa con comuna
-    longitud_metros: int
-    observaciones: Optional[str]
-    geometria: Union[str, Dict[str, Any]]
+class CicloviaOut(BaseModel):
+    id: int
+    nombre: str
+    longitud_metros: float
+    ancho: Optional[float]
+    comuna: ComunaOut
+    tipo_ciclovia: TipoCicloviaOut
+    estado_avance: EstadoAvanceOut
+    geometria: Optional[dict]
 
     class Config:
         orm_mode = True

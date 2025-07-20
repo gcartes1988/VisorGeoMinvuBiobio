@@ -9,6 +9,7 @@ from geoalchemy2.shape import from_shape
 from typing import List
 from app.database import get_db
 from app.models.pavimento import Pavimento
+from app.models.log_cambios import LogCambios  # ✅ import corregido
 from app.schemas.pavimento import PavimentoCreate, PavimentoUpdate, PavimentoOut
 from app.routes.usuario import get_current_user
 from app.models.usuario import Usuario
@@ -21,24 +22,14 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
         body = await request.json()
         print("📨 BODY RECIBIDO:", json.dumps(body, indent=2, ensure_ascii=False))
 
-        # Validar payload contra el esquema
         payload = PavimentoCreate(**body)
-        print("🔍 Campos activos en schema:", PavimentoCreate.__annotations__)
-        print("📦 Payload recibido:", payload)
-        print("📏 Geometría cruda:", payload.geometria)
-
-        # Convertir string a dict si es necesario
         geojson = json.loads(payload.geometria) if isinstance(payload.geometria, str) else payload.geometria
-        print("📏 GeoJSON como dict:", geojson)
 
-        # Validar estructura mínima del GeoJSON
-        if "type" not in geojson or "coordinates" not in geojson:
+        if not geojson.get("type") or not geojson.get("coordinates"):
             raise HTTPException(status_code=400, detail="❌ Geometría inválida.")
 
-        # Convertir a formato PostGIS
         geom_pg = from_shape(shape(geojson), srid=4326)
 
-        # Crear nuevo pavimento
         nuevo = Pavimento(
             proyecto_id=payload.proyecto_id,
             comuna_id=payload.comuna_id,
@@ -52,20 +43,17 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(nuevo)
 
-        # Insertar en tabla intermedia
         for tipo_id in payload.tipos_pavimento:
             db.execute(
                 text("INSERT INTO pavimento_tipo_pavimento (pavimento_id, tipo_pavimento_id) VALUES (:pid, :tid)"),
                 {"pid": nuevo.id, "tid": tipo_id}
             )
 
-        # Consultar los tipos agregados
         tipos = db.execute(
             text("SELECT id, nombre FROM tipo_pavimento WHERE id IN (SELECT tipo_pavimento_id FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid)"),
             {"pid": nuevo.id}
         ).fetchall()
 
-        # Devolver geometría como GeoJSON
         geojson_geom = mapping(shape(geojson))
 
         return PavimentoOut(
@@ -159,14 +147,14 @@ def actualizar_pavimento(
     try:
         cambios = []
 
+        # Geometría
         if payload.geometria:
             nueva_geom = json.loads(payload.geometria) if isinstance(payload.geometria, str) else payload.geometria
-            if "type" not in nueva_geom or "coordinates" not in nueva_geom:
+            if not nueva_geom.get("type") or not nueva_geom.get("coordinates"):
                 raise HTTPException(status_code=400, detail="❌ Geometría inválida.")
             nueva_geom_shape = from_shape(shape(nueva_geom), srid=4326)
             if pavimento.geometria != nueva_geom_shape:
-                from app.models.log_cambios import LogCambio
-                cambios.append(LogCambio(
+                cambios.append(LogCambios(
                     proyecto_id=pavimento.proyecto_id,
                     usuario_id=current_user.id,
                     accion="edición",
@@ -176,13 +164,13 @@ def actualizar_pavimento(
                 ))
                 pavimento.geometria = nueva_geom_shape
 
+        # Otros campos modificables
         for attr, value in payload.dict(exclude_unset=True).items():
             if attr in ["geometria", "tipos_pavimento"]:
                 continue
             valor_anterior = getattr(pavimento, attr)
             if value != valor_anterior:
-                from app.models.log_cambios import LogCambio
-                cambios.append(LogCambio(
+                cambios.append(LogCambios(
                     proyecto_id=pavimento.proyecto_id,
                     usuario_id=current_user.id,
                     accion="edición",
@@ -192,6 +180,7 @@ def actualizar_pavimento(
                 ))
                 setattr(pavimento, attr, value)
 
+        # Actualizar tabla intermedia (tipos de pavimento)
         db.execute(
             text("DELETE FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid"),
             {"pid": pavimento_id}
@@ -203,6 +192,10 @@ def actualizar_pavimento(
                 {"pid": pavimento_id, "tid": tipo_id}
             )
 
+        # Mensaje según si hubo cambios
+        if not cambios:
+            return {"mensaje": "⚠️ No se detectaron cambios para actualizar."}
+
         for cambio in cambios:
             db.add(cambio)
 
@@ -211,8 +204,12 @@ def actualizar_pavimento(
         return {"mensaje": "✅ Pavimento actualizado correctamente"}
 
     except Exception as e:
+        import traceback
+        print("💥 ERROR INTERNO AL EDITAR PAVIMENTO:")
+        traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
+
 
 @router.delete("/{pavimento_id}", response_model=dict)
 def eliminar_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
@@ -220,6 +217,18 @@ def eliminar_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
     if not pavimento:
         raise HTTPException(status_code=404, detail="❌ Pavimento no encontrado.")
 
-    db.delete(pavimento)
-    db.commit()
-    return {"mensaje": "🗑️ Pavimento eliminado correctamente"}
+    try:
+        # 🔁 Eliminar relaciones primero
+        db.execute(
+            text("DELETE FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid"),
+            {"pid": pavimento_id}
+        )
+
+        db.delete(pavimento)
+        db.commit()
+
+        return {"mensaje": "🗑️ Pavimento eliminado correctamente"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"❌ Error al eliminar pavimento: {str(e)}")
+

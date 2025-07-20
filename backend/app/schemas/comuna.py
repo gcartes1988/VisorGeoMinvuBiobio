@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 
-class ComunaResponse(BaseModel):
+class ComunaOut(BaseModel):
     id: int
     nombre: str
     provincia_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAuth } from "firebase/auth";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL, 
+  baseURL: process.env.REACT_APP_API_URL,
 });
 
 api.interceptors.request.use(
@@ -17,9 +17,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

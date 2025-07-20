@@ -1,38 +1,24 @@
-import { useEffect, useState } from "react";
+// src/components/EditarPavimento.jsx
 import { useParams, useNavigate } from "react-router-dom";
-import api from "../services/api";
-import FormularioPavimento from "../components/FormularioPavimento";
+import AdminLayout from "../layout/AdminLayout";
+import FormularioPavimento from "./FormularioPavimento";
+console.log("🧪 Se cargó EditarPavimento.jsx");
 
 const EditarPavimento = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [pavimento, setPavimento] = useState(null);
 
-  useEffect(() => {
-    const fetchPavimento = async () => {
-      try {
-        const res = await api.get(`/pavimentos/${id}`);
-        setPavimento(res.data);
-      } catch (err) {
-        console.error("Error al cargar pavimento", err);
-      }
-    };
-
-    fetchPavimento();
-  }, [id]);
-
-  const handleSubmit = async (datosActualizados) => {
-    try {
-      await api.put(`/pavimentos/${id}`, datosActualizados);
-      navigate("/admin");
-    } catch (err) {
-      console.error("Error al actualizar pavimento", err);
-    }
+  const handleSuccess = () => {
+    navigate("/admin");
   };
 
-  if (!pavimento) return <p>Cargando pavimento...</p>;
+  return (
+    <AdminLayout> 
+       <FormularioPavimento pavimentoId={id} modoEdicion={true} onSuccess={handleSuccess} />
 
-  return <FormularioPavimento modo="editar" pavimento={pavimento} onSubmit={handleSubmit} />;
+    </AdminLayout>
+  
+  );
 };
 
 export default EditarPavimento;

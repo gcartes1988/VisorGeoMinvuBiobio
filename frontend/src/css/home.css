@@ -1,4 +1,4 @@
-/* Estructura principal */
+/* === Contenedor principal === */
 .visor-container {
   display: flex;
   flex-direction: row;
@@ -8,113 +8,16 @@
   background-color: var(--neutral);
 }
 
-/* Sidebar izquierdo */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 100vh;
-  background-color: var(--white);
-  border-right: 1px solid var(--accent);
-  padding: 20px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-  transition: width 0.3s ease;
-  z-index: 1000;
-  overflow: hidden;
-}
-
-.sidebar.minimizada {
-  width: 65px;
-  padding: 10px 10px;
-}
-
-.sidebar-contenido {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.sidebar h3 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  color: var(--black);
-}
-
-.btn-buscar {
-  padding: 8px 12px;
-  background-color: var(--primary);
-  border: none;
-  border-radius: 6px;
-  color: var(--white);
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-buscar:hover {
-  background-color: var(--primary-dark);
-}
-
-/* Botón de minimización */
-.toggle-sidebar {
-  position: absolute;
-  top: 30px;
-  right: 20px;
-  background: var(--primary);
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  color: var(--white);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10001;
-}
-
-@media (max-width: 768px) {
-  .btn-sidebar-toggle {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 14px;
-    font-size: 16px;
-    background-color: var(--primary);
-    color: var(--white);
-    border: none;
-    border-radius: 8px;
-  }
-}
-
-/* Mapa */
-.mapa {
-  flex-grow: 1;
-  position: relative;
-  height: 100vh;
-}
-
+/* === Mapa === */
+.mapa,
 .map-wrapper {
+  flex-grow: 1;
   height: 100vh;
   width: 100%;
+  position: relative;
 }
 
-.leaflet-top.leaflet-right .leaflet-control {
-  margin-top: 80px;
-}
-
-.leaflet-control button {
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Controles de zoom personalizados */
+/* === Control de zoom personalizado === */
 .zoom-control-custom {
   display: flex;
   flex-direction: column;
@@ -137,43 +40,7 @@
   background-color: var(--neutral);
 }
 
-/* Estado búsqueda */
-.estado-busqueda {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: #ffffffcc;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--gray-a);
-}
-
-/* Toast */
-.toast-mensaje {
-  position: absolute;
-  bottom: 30px;
-  right: 60px;
-  background-color: var(--white);
-  border: 1px solid var(--accent);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--black);
-  z-index: 999;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.toast-mensaje button {
-  margin-left: 10px;
-  border: none;
-  background: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: var(--gray-b);
-}
-
-/* Barra superior derecha */
+/* === Barra superior derecha === */
 .topbar.right {
   position: absolute;
   top: 10px;
@@ -183,37 +50,22 @@
   z-index: 500;
 }
 
-/* Botón admin */
+/* === Botón área admin === */
 .btn-admin {
   background-color: var(--gray-a);
   color: var(--white);
   padding: 8px 14px;
   border: none;
-  cursor: pointer;
-  font-size: 14px;
   border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 .btn-admin:hover {
   background-color: var(--black);
 }
 
-/* Botón filtros */
-.btn-filtros {
-  background-color: var(--tertiary);
-  color: var(--white);
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-filtros:hover {
-  background-color: #06132f;
-}
-
-/* Botón reset map */
+/* === Botón para resetear mapa === */
 .btn-reset-map {
   position: absolute;
   bottom: 20px;
@@ -222,55 +74,62 @@
   border: 1px solid var(--accent);
   border-radius: 8px;
   padding: 8px;
+  font-size: 18px;
   cursor: pointer;
   z-index: 1000;
-  font-size: 18px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive */
-@media screen and (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.minimizada {
-    transform: translateX(-215px); /* deja visible solo el botón de 65px aprox */
-  }
-
-  .toggle-sidebar {
-    position: fixed;       /* 🔥 Fijo en pantalla */
-    top: 20px;
-    left: 10px;
-    z-index: 1100;
-    background: var(--primary);
-    color: var(--white);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  }
-}
-
-
-
-
-
-/* Buscador */
-.buscador-proyectos {
-  margin-bottom: 12px;
-}
-
-.buscador-proyectos input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--gray-b);
+/* === Estado búsqueda (texto inferior) === */
+.estado-busqueda {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: var(--white);
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 14px;
+  color: var(--gray-a);
+}
+
+/* === Toasts === */
+.toast-mensaje {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  bottom: 30px;
+  right: 10px;
+  background-color: var(--white);
+  border: 1px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--gray-a);
+  z-index: 999;
+}
+
+.toast-mensaje button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--gray-b);
+  cursor: pointer;
+}
+
+.toast-mensaje.success .icon-toast { color: var(--green); }
+.toast-mensaje.info .icon-toast    { color: var(--primary); }
+.toast-mensaje.error .icon-toast   { color: var(--secondary); }
+
+.popup-proyecto h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-heading);
+  color: var(--primary-dark);
+}
+
+.popup-proyecto p {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  font-family: var(--font-base);
 }

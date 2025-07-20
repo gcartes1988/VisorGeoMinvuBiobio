@@ -1,0 +1,72 @@
+.leyenda-mapa {
+  background: var(--white);
+  border: 1px solid var(--gray-b);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: var(--font-base);
+  font-size: 0.9rem;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.sombra-suave {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-toggle {
+  background: none;
+  border: none;
+  color: var(--gray-a);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-base);
+  font-size: 1rem;
+  padding: 0;
+}
+
+.lista-leyenda {
+  list-style: none;
+  padding: 10px 0 0;
+  margin: 0;
+}
+
+.lista-leyenda li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cuadro-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid #999;
+  display: inline-block;
+}
+
+.modo-sidebar {
+  position: absolute;
+  bottom: 30px;
+  left: 300px;
+}
+
+.modo-movil {
+  position: absolute;
+  bottom: 30px;
+  left: 80px;
+}
+
+@media (max-width: 768px) {
+  .modo-sidebar {
+    left: 20px !important;
+  }
+}
+
+.leyenda-colapsada {
+  padding: 10px 12px;
+  border-radius: 20px;
+}

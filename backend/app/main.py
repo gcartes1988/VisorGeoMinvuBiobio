@@ -16,6 +16,8 @@ from app.schemas.tipo_calzada import TipoCalzadaOut
 from app.schemas.tipo_pavimento import TipoPavimentoOut
 from app.schemas.estado_avance import EstadoAvanceOut
 from app.schemas.contratista import ContratistaOut
+from app.routes import fuente_financiamiento
+
 
 app = FastAPI(
     title="VisorGeo Minvu Biobío",
@@ -43,7 +45,10 @@ app.include_router(categoria.router, prefix="/api", tags=["Categorías"])
 app.include_router(provincia.router, prefix="/api", tags=["Provincias"])
 app.include_router(comuna.router, prefix="/api", tags=["Comunas"])
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
-app.include_router(log_cambios.router, tags=["Log de Cambios"])
+app.include_router(log_cambios.router, prefix="/api", tags=["Log de Cambios"])
+app.include_router(fuente_financiamiento.router, prefix="/api", tags=["Fuente Financiamiento"])
+
+
 
 # Endpoints referenciales
 @app.get("/api/tipo-calzada", response_model=list[TipoCalzadaOut])

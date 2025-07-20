@@ -1,5 +1,8 @@
 @import './styles.css';
 
+/* ──────────────────────────────────────────────
+   🔲 CONTENEDOR GENERAL
+────────────────────────────────────────────── */
 .lista {
   padding: 2rem;
   background-color: var(--white);
@@ -11,8 +14,13 @@
 .lista h2 {
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
+  font-family: var(--font-heading);
+  color: var(--primary);
 }
 
+/* ──────────────────────────────────────────────
+   📊 TABLA BASE
+────────────────────────────────────────────── */
 .lista table {
   width: 100%;
   border-collapse: collapse;
@@ -24,25 +32,42 @@
   padding: 0.8rem;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+  word-break: break-word;
 }
 
 .lista th {
   background-color: var(--neutral);
   font-weight: bold;
-}
-
-.lista td {
-  vertical-align: middle;
+  font-size: 0.95rem;
+  color: var(--gray-a);
 }
 
 .lista tr:hover {
-  background-color: #f9f9f9;
+  background-color: #f3f6f9;
 }
 
 .lista input[type="checkbox"] {
   transform: scale(1.2);
 }
 
+.tabla-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.tabla-lista td {
+  vertical-align: middle;
+}
+
+.acciones-columna {
+  text-align: center;
+  width: 130px;
+}
+
+/* ──────────────────────────────────────────────
+   🛠 BOTONES
+────────────────────────────────────────────── */
 .lista .btn-acciones {
   display: flex;
   gap: 0.5rem;
@@ -66,34 +91,107 @@
   color: white;
 }
 
-.contenedor-lista {
-  margin: 20px;
-  padding: 20px;
-  background: #fff;
+/* Iconos con estilo pill (más redondeado) */
+.btn-icono {
+  border: none;
+  background-color: var(--neutral);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  margin-right: 0.4rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-icono:hover {
+  background-color: #ddd;
+}
+
+.btn-icono .material-symbols-outlined {
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+/* ──────────────────────────────────────────────
+   🟢 ESTADOS (aprobado, pendiente, rechazado)
+────────────────────────────────────────────── */
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.estado.aprobado {
+  color: var(--green);
+}
+
+.estado.pendiente {
+  color: var(--orange);
+}
+
+.estado.rechazado {
+  color: var(--secondary);
+}
+
+.estado span {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* ──────────────────────────────────────────────
+   📂 COLAPSABLES / ANIMACIONES
+────────────────────────────────────────────── */
+.titulo-colapsable {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5rem;
 }
 
-.contenedor-lista h2 {
-  margin-bottom: 16px;
+.btn-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
 }
 
-thead {
-  background-color: #f5f5f5;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
 }
 
-th, td {
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  text-align: left;
+/* ──────────────────────────────────────────────
+   🎨 ICONOS (Material Symbols)
+────────────────────────────────────────────── */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 20;
 }
 
-tr:nth-child(even) {
-  background-color: #f9f9f9;
+/* Vista compacta para Dashboard */
+.lista.compacta {
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  background-color: transparent;
+  border-radius: 0;
 }

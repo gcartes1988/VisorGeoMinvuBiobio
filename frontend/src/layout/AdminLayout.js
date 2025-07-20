@@ -4,7 +4,7 @@ const AdminLayout = ({ children }) => {
   return (
     <>
       <SideBarAdmin />
-      <main className="contenido-admin">
+      <main className="admin-panel-content">
         {children}
       </main>
     </>

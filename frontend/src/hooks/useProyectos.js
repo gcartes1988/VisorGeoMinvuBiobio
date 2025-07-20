@@ -1,30 +1,26 @@
-// src/hooks/useProyectos.js
 import { useEffect, useState } from 'react';
-import axios from '../services/api';
+import api from '../services/api';
 
 const useProyectos = () => {
-  const [proyectos, setProyectos] = useState([]);
+  const [proyectos, setProyectos] = useState([]); // ahora es un array de features
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const cargarProyectos = async () => {
+    const cargar = async () => {
       try {
-        const res = await axios.get("/proyectos"); // usa tu API ya configurada
-        setProyectos(res.data);
-        console.log("📦 Proyectos cargados desde useProyectos:", res.data);
-      } catch (err) {
-        console.error("❌ Error cargando proyectos en useProyectos:", err);
-        setError(err);
+        const res = await api.get('/proyectos/publicos');
+        setProyectos(res.data.features); // 👈 solo usamos el array de features
+      } catch (e) {
+        console.error("❌ Error al obtener proyectos:", e);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
-
-    cargarProyectos();
+    cargar();
   }, []);
 
   return { proyectos, loading, error };
 };
-
 export default useProyectos;

@@ -1,42 +1,35 @@
-import useProyectos from "../hooks/useProyectos"; // ✅ Hook personalizado
-import ListaProyectos from "../components/ListaProyectos";
-import ListaPavimentos from "../components/ListaPavimentos";
-import AdminLayout from "../layout/AdminLayout"; // ✅ Layout compartido
+import ListaProyectos from "../components/admin/ListaProyectos";
+import ListaPavimentos from "../components/admin/ListaPavimentos";
+import ListaParques from "../components/admin/ListaParque";
+import DashboardResumen from "../components/admin/DashboardResumen";
+import AdminLayout from "../layout/AdminLayout";
+import Icono from "../components/Icono";
 import "../css/admin.css";
 
 const Admin = () => {
-  const { proyectos, loading, error } = useProyectos(); // ⬅️ obtenemos los proyectos desde el hook
-
-  if (loading) return <p>Cargando proyectos...</p>;
-  if (error) return <p>Error al cargar proyectos.</p>;
-
-  const proyectosActivos = proyectos.filter((p) =>
-    p.estado?.toLowerCase() === "aprobado"
-  ).length;
-  
-
-
   return (
     <AdminLayout>
-      <div className="admin-panel-content">
-        <header className="encabezado-admin">
-          <div className="card resumen">
-            <p>Proyectos activos</p>
-            <h2>{proyectosActivos}</h2>
-          </div>
+      <div className="encabezado-admin">
+        <div>
+          <h2 className="font-level-2 text-primary mb-3">Panel de administración</h2>
+        </div>
+        <button className="icon-button" title="Notificaciones">
+          <Icono nombre="notifications" />
+        </button>
+      </div>
 
-          <div className="card resumen">
-            <p>Últimas modificaciones</p>
-            <h2>-</h2>
-          </div>
+      <DashboardResumen />
 
-          
-        </header>
+      <div className="seccion-admin">
+        <ListaProyectos limite={5} />
+      </div>
 
-        {/* Listado de proyectos y pavimentos */}
-        <ListaProyectos />
-        <ListaPavimentos />
+      <div className="seccion-admin">
+        <ListaPavimentos limite={5} />
+      </div>
 
+      <div className="seccion-admin">
+        <ListaParques limite={5} />
       </div>
     </AdminLayout>
   );

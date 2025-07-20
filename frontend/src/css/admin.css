@@ -1,241 +1,224 @@
 @import './styles.css';
 
+/* Layout general */
+.admin-panel {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--white);
+  font-family: var(--font-base);
+}
 
-  /* Layout general */
-  .admin-panel {
-    display: flex;
-    min-height: 100vh;
-    background-color: var(--white);
-    font-family: var(--fuente-base);
-  }
-  
-/* Contenedor del contenido que va al lado del sidebar */
-.contenido-admin {
-  margin-left: 250px; /* mismo ancho del sidebar */
+/* Contenido principal */
+.admin-panel-content {
+  margin-left: 250px;
   padding: 2rem;
   min-height: 100vh;
-  background-color: #fafafa;
+  background-color: var(--neutral); /* Antes: #fafafa */
+  transition: margin-left 0.3s ease;
 }
-  /* Encabezado con métricas */
-  .encabezado-admin {
-    margin: 0 30px 0 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  
-  /* Tarjetas */
-  .card {
-    background-color:var(--white);
-    padding: 20px;
-    border-radius: 10px;
-    border-left: 5px solid var(--color-azul-claro);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-    min-width: 200px;
-    flex: 1;
-  }
-  
-  .card p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(---gray-b);
-  }
-  
-  .card h2 {
-    margin-top: 8px;
-    font-size: 2rem;
-    color: var(--primary);
-  }
-  
-  /* Botón añadir */
-  .boton-add {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex: 1;
-    min-width: 200px;
-  }
-  
-  .btn {
-    background-color: var(--primary);
-    color: var(--white);
-    padding: 10px 18px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-  }
-  
-  .btn:hover {
-    background-color: var(--primary-dark);
-  }
-  
-  /* Sidebar del admin */
-  .sidebar-admin {
-    width: 260px;
-    background-color: var(--white);
-    padding: 20px;
-    border-right: 1px solid var(---gray-b);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  
-  .sidebar-admin h2 {
-    font-size: 1.3rem;
-    font-weight: bold;
-    margin-bottom: 30px;
-    color: var(--primary);
-    line-height: 1.4;
-  }
-  
-  .sidebar-admin nav {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .sidebar-admin .link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(---gray-b);
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 6px;
-    transition: background-color 0.2s;
-  }
-  
-  .sidebar-admin .link:hover,
-  .sidebar-admin .link.active {
-    background-color: var(--color-hover);
-    color: var(--primary);
-  }
-  
-  .sidebar-admin .usuario {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .sidebar-admin .usuario img {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 1px solid var(--gray-b);
-  }
-  .sidebar-admin .usuario {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 1rem;
-    border-top: 1px solid var(--accent);
-  }
-  
-  .sidebar-admin .usuario img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-  }
-  
-  
-  /* Info usuario */
-  .usuario-info {
-    background-color: #fff;
-    border-left: 4px solid var(--primary);
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 0.95rem;
-    color: var(---gray-b);
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .encabezado-admin {
-      flex-direction: column;
-      align-items: stretch;
-    }
-  
-    .boton-add {
-      justify-content: center;
-    }
-  }
 
-/* Sidebar fijo a la izquierda */
+/* Encabezado de métricas */
+.encabezado-admin {
+  margin: 0 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Tarjetas resumen */
+.card {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 5px solid var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  min-width: 200px;
+  flex: 1;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--gray-b);
+}
+
+.card h2 {
+  margin-top: 8px;
+  font-size: 2rem;
+  color: var(--primary);
+}
+
+/* Botón añadir */
+.boton-add {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn {
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Sidebar admin */
 .sidebar-admin {
   position: fixed;
   top: 0;
   left: 0;
   width: 250px;
-  height: 100vh; /* alto total */
-  background-color: #f7f7f7;
-  border-right: 1px solid #ccc;
+  height: 100vh;
+  background-color: var(--neutral); /* Antes: #f7f7f7 */
+  border-right: 1px solid var(--accent);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   z-index: 1000;
+  transition: transform 0.3s ease;
 }
-  
-  .sidebar-admin h2 {
-    margin-bottom: 1rem;
-    font-size: 1.4rem;
+
+.sidebar-admin.collapsed {
+  transform: translateX(-100%);
+}
+
+.sidebar-admin.open {
+  transform: translateX(0);
+}
+
+.sidebar-admin h2 {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+.sidebar-admin nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-admin .link {
+  text-decoration: none;
+  color: var(--gray-a);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-admin .link:hover,
+.sidebar-admin .link.active {
+  background-color: var(--accent);       /* Antes: #e0e0e0 */
+  color: var(--primary-dark);           /* Antes: #0055a5 */
+}
+
+.sidebar-admin footer {
+  margin-top: auto;
+}
+
+.sidebar-admin .usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--accent);
+}
+
+.sidebar-admin .usuario img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.sidebar-admin .btn-cerrar-sesion {
+  background-color: var(--secondary);   /* Antes: #cc0000 */
+  color: var(--white);
+  border: none;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 4px;
+}
+
+/* Botón hamburguesa móvil */
+.toggle-sidebar {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  background-color: var(--primary-dark); /* Antes: #0055a5 */
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toggle-sidebar {
+    display: block;
   }
-  
-  .sidebar-admin nav {
-    display: flex;
+
+  .admin-panel-content {
+    margin-left: 0 !important;
+  }
+
+  .encabezado-admin {
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: stretch;
   }
-  
-  .sidebar-admin .link {
-    text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .sidebar-admin .link.active {
-    font-weight: bold;
-    color: #0055a5;
-  }
-  
-  .sidebar-admin footer {
-    margin-top: auto;
-  }
-  
-  .sidebar-admin .usuario {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .sidebar-admin .usuario img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .sidebar-admin .btn-cerrar-sesion {
-    background-color: #cc0000;
-    color: white;
-    border: none;
-    padding: 0.4rem 0.6rem;
-    width: 100%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+
+  .boton-add {
     justify-content: center;
-    gap: 0.4rem;
-    border-radius: 4px;
   }
-  
+}
+
+.alerta {
+  padding: 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.alerta-exito {
+  background-color: #e6ffea;
+  color: #006600;
+  border: 1px solid #00aa00;
+}
+
+.alerta-advertencia {
+  background-color: #fffbe6;
+  color: #997a00;
+  border: 1px solid #e6b800;
+}
+
+.alerta-error {
+  background-color: #ffe6e6;
+  color: #990000;
+  border: 1px solid #cc0000;
+}

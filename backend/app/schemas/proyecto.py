@@ -1,22 +1,55 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
-from app.models.proyecto import EstadoProyectoEnum
+from .categoria import CategoriaOut
 
+
+class CategoriaOut(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+# ✅ Esquema para crear/editar proyecto
 class ProyectoCreate(BaseModel):
     nombre: str
-    descripcion: str
+    descripcion: Optional[str] = None
     categoria_id: int
-    estado_proyecto: EstadoProyectoEnum
+    estado_proyecto: Optional[str] = "pendiente"
+
+    model_config = {
+        "from_attributes": True
+    }
+
+# ✅ Esquema para respuestas generales
+class ProyectoOut(ProyectoCreate):
+    id: int
     fecha_creacion: Optional[datetime] = None
 
-    class Config:
-        use_enum_values = True
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }
 
+# ✅ Esquema para respuestas públicas con categoría embebida
 class ProyectoPublicoOut(BaseModel):
-    proyecto_id: int
+    id: int
     nombre: str
-    sector: str
-    geometria: dict
-    tipo: str
+    descripcion: Optional[str]
+    estado_proyecto: str
+    fecha_creacion: Optional[datetime]
+    categoria: CategoriaOut
+
+    model_config = {
+        "from_attributes": True
+    }
+
+# ✅ Esquema simple para usar dentro de ParqueDetalleOut
+class ProyectoOutSimple(BaseModel):
+    id: int
+    nombre: str
+
+    model_config = {
+        "from_attributes": True
+    }

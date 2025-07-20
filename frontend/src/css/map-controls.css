@@ -1,0 +1,41 @@
+/* 🎯 Estilos de botones personalizados del mapa */
+.zoom-control-custom,
+.leaflet-bar.leaflet-control button,
+.leaflet-bar.leaflet-control .material-symbols-outlined {
+  background-color: var(--white);
+  color: var(--gray-a);
+  border: none;
+  font-size: 20px;
+  padding: 6px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+.zoom-control-custom a:hover,
+.leaflet-bar.leaflet-control button:hover {
+  background-color: var(--neutral);
+}
+
+/* Botones laterales (reset, estilo) */
+.leaflet-control.custom-control-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+
+.leaflet-top.leaflet-right .leaflet-control,
+.leaflet-bottom.leaflet-right .leaflet-control {
+  margin-top: 80px;
+}
+
+.material-symbols-outlined {
+  font-size: 20px;
+}

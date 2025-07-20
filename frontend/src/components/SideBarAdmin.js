@@ -1,12 +1,27 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { FaMap, FaFolder,  FaHistory, FaSignOutAlt } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { useUser } from "../context/UserContext";
+import { useState, useEffect } from "react";
+import "../css/admin.css";
 
 const SideBarAdmin = () => {
-  const { perfil, loading } = useUser(); // 🔥 firebaseUser eliminado
+  const { perfil, loading } = useUser();
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(false);
+  const [open, setOpen] = useState(true);
+
+  // Detectar tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      setOpen(!mobile); // abierto por defecto en escritorio, cerrado en móvil
+    };
+    handleResize(); // inicial
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   if (loading) return null;
 
@@ -20,55 +35,75 @@ const SideBarAdmin = () => {
   };
 
   return (
-    <aside className="sidebar-admin">
-      <h2>
-        VisorGeo<br />MinvuBiobío
-      </h2>
-
-      <nav>
-        <NavLink to="/admin" className="link">
-          <FaMap /> Panel de administración
-        </NavLink>
-
-        <NavLink to="/admin/proyectos" className="link">
-          <FaFolder /> Proyectos
-        </NavLink>
-
-        {perfil?.rol === "admin" && (
-          <>
-            {/* 
-            <NavLink to="/admin/solicitudes" className="link">
-              <FaClipboardList /> Solicitudes
-            </NavLink>
-            */}
-            <NavLink to="/admin/log-cambios" className="link">
-              <FaHistory /> Historial de cambios
-            </NavLink>
-              {/* 
-            <NavLink to="/admin/documentos" className="link">
-              <FaFileAlt /> Documentos
-            </NavLink> 
-            */}
-          </>
-        )}
-      </nav>
-
-      <footer>
-        {perfil && (
-          <div className="usuario">
-            <img src="/usuario.jpg" alt="Usuario" />
-            <p>
-              <strong>{perfil.nombre_usuario}</strong><br />
-              <span>{perfil.rol}</span>
-            </p>
-          </div>
-        )}
-
-        <button className="btn-cerrar-sesion" onClick={handleLogout}>
-          <FaSignOutAlt /> Cerrar sesión
+    <>
+      {isMobile && (
+        <button
+          className="toggle-sidebar"
+          onClick={() => setOpen(!open)}
+          aria-label="Abrir menú"
+        >
+          <span className="material-symbols-outlined">menu</span>
         </button>
-      </footer>
-    </aside>
+      )}
+
+      <aside className={`sidebar-admin ${open ? "open" : "collapsed"}`}>
+        <div className="sidebar-header">
+          <h2>VisorGeo<br /><span className="sub-logo">Minvu Biobío</span></h2>
+        </div>
+
+        <nav className="sidebar-nav">
+  <NavLink to="/admin" className="link">
+    <span className="material-symbols-outlined">dashboard</span>
+    Panel
+  </NavLink>
+
+  <NavLink to="/admin/crear-proyecto" className="link">
+    <span className="material-symbols-outlined">add_circle</span>
+    Crear proyecto
+  </NavLink>
+
+  <NavLink to="/admin/gestion-proyectos" className="link">
+    <span className="material-symbols-outlined">folder</span>
+    Gestión de proyectos
+  </NavLink>
+
+  <NavLink to="/admin/gestion-pavimentos" className="link">
+    <span className="material-symbols-outlined">construction</span>
+    Pavimentos y vías locales
+  </NavLink>
+
+  <NavLink to="/admin/gestion-parques" className="link">
+    <span className="material-symbols-outlined">park</span>
+    Parques urbanos
+  </NavLink>
+
+  {perfil?.rol === "admin" && (
+    <NavLink to="/admin/log-cambios" className="link">
+      <span className="material-symbols-outlined">history</span>
+      Cambios
+    </NavLink>
+  )}
+</nav>
+
+
+        <footer>
+  <div className="usuario">
+    <span className="material-symbols-outlined" style={{ fontSize: "40px", color: "#555" }}>
+      account_circle
+    </span>
+    <div>
+      <strong>{perfil?.nombre_usuario}</strong><br />
+      <small>{perfil?.rol}</small>
+    </div>
+  </div>
+  <button className="btn-cerrar-sesion" onClick={handleLogout}>
+    <span className="material-symbols-outlined">logout</span>
+    Cerrar sesión
+  </button>
+</footer>
+
+      </aside>
+    </>
   );
 };
 

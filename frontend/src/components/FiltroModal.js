@@ -1,23 +1,25 @@
+// ✅ FiltroModal.js
 import "../css/filtroModal.css";
 
-function FiltroModal({ visible, categoria, comuna, onRemoveCategoria, onRemoveComuna, onClearAll, onClose }) {
+function FiltroModal({ visible, categorias = [], comuna, onRemoveCategoria, onRemoveComuna, onClearAll, onClose }) {
   if (!visible) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <span>{(categoria || comuna) ? 'Filtros activos' : 'Sin filtros'}</span>
+          <span>{(categorias.length > 0 || comuna) ? 'Filtros activos' : 'Sin filtros'}</span>
           <button onClick={onClearAll} className="link-clear">BORRAR TODO</button>
         </div>
 
         <div className="modal-body">
-          {categoria && (
-            <div className="filtro-item">
-              <span>{categoria.label}</span>
-              <button onClick={onRemoveCategoria}>&times;</button>
+          {categorias.length > 0 && categorias.map((cat, i) => (
+            <div key={i} className="filtro-item">
+              <span>{cat.label}</span>
+              <button onClick={() => onRemoveCategoria(cat)}>&times;</button>
             </div>
-          )}
+          ))}
+
           {comuna && (
             <div className="filtro-item">
               <span>{comuna.label}</span>

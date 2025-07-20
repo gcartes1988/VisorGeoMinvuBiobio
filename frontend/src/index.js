@@ -5,7 +5,15 @@ import App from './App'; // ✅ Este es tu componente principal
 import reportWebVitals from './reportWebVitals';
 import { UserProvider } from './context/UserContext';
 
-console.log("API KEY:", process.env.REACT_APP_FIREBASE_API_KEY); // 👈 aquí
+const observerError = 'ResizeObserver loop completed with undelivered notifications.';
+const resizeObserverErrMsg = 'ResizeObserver loop limit exceeded';
+
+window.addEventListener('error', (e) => {
+  if (e.message === resizeObserverErrMsg || e.message === observerError) {
+    e.stopImmediatePropagation();
+  }
+});
+console.log("API KEY:", process.env.REACT_APP_FIREBASE_API_KEY); 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

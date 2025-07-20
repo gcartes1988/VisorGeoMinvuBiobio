@@ -1,0 +1,31 @@
+/* src/css/loading.css */
+.loading-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--neutral); /* color institucional */
+  }
+  
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid var(--accent);
+    border-top: 5px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .loading-text {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    color: var(--gray-a);
+    font-family: var(--font-base);
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  

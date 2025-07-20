@@ -1,111 +1,75 @@
 import { useEffect, useState } from "react";
 import axios from "../services/api";
-import PavimentoMap from "../components/PavimentoMap";
-import FiltroModal from "../components/FiltroModal";
+import MapaProyectos from "../components/MapaProyectos";
 import Sidebar from "../components/Sidebar";
-import "../css/home.css";
-import { LatLngBounds } from "leaflet";
+import Icono from "../components/Icono";
 import { useNavigate } from "react-router-dom";
+import "../css/home.css";
 
 function Home() {
   const [categorias, setCategorias] = useState([]);
   const [comunas, setComunas] = useState([]);
-  const [selectedCategoria, setSelectedCategoria] = useState(null);
-  const [selectedComuna, setSelectedComuna] = useState(null);
-  const [geojsonData, setGeojsonData] = useState(null);
-  const [mapBounds, setMapBounds] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [mensaje, setMensaje] = useState("");
-  const [mostrarToast, setMostrarToast] = useState(false);
-  const [mostrarModal, setMostrarModal] = useState(false);
-  
-
+  const [geojsonData, setGeojsonData] = useState([]);
+  const [mensajeUsuario, setMensajeUsuario] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [sidebarMinimizada, setSidebarMinimizada] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/categorias").then(res => setCategorias(res.data));
-    axios.get("/comunas").then(res => setComunas(res.data));
+    axios.get("/categorias").then((res) =>
+      setCategorias(res.data.map((cat) => ({
+        value: cat.id,
+        label: cat.nombre,
+      })))
+    );
+
+    axios.get("/comunas").then((res) =>
+      setComunas(res.data.map((com) => ({
+        value: com.id,
+        label: com.nombre,
+      })))
+    );
   }, []);
 
-  const calcularBounds = (features) => {
-    let bounds = null;
-    features.forEach((f) => {
-      const coords = f.geometry.coordinates;
-      if (f.geometry.type === "Point") {
-        const latlng = [coords[1], coords[0]];
-        bounds = bounds ? bounds.extend(latlng) : new LatLngBounds(latlng, latlng);
-      } else if (f.geometry.type === "LineString") {
-        coords.forEach(([lng, lat]) => {
-          const latlng = [lat, lng];
-          bounds = bounds ? bounds.extend(latlng) : new LatLngBounds(latlng, latlng);
+  const handleResultados = async (geojson) => {
+    setCargando(true);
+    try {
+      if (geojson?.features?.length > 0) {
+        const agrupadas = {};
+        geojson.features.forEach((f) => {
+          const tipo = f.properties?.tipo?.toLowerCase() || "otros";
+          if (!agrupadas[tipo]) agrupadas[tipo] = [];
+          agrupadas[tipo].push(f);
         });
-      } else if (f.geometry.type === "Polygon") {
-        coords[0].forEach(([lng, lat]) => {
-          const latlng = [lat, lng];
-          bounds = bounds ? bounds.extend(latlng) : new LatLngBounds(latlng, latlng);
-        });
-      }
-    });
-    return bounds;
-  };
 
-  const handleBuscar = () => {
-    setMensaje("");
-    setMostrarToast(false);
-
-    if (!selectedCategoria && !selectedComuna) {
-      setMensaje("⚠️ Selecciona al menos una categoría o comuna.");
-      setMostrarToast(true);
-      return;
-    }
-
-    setLoading(true);
-
-    const params = {};
-    if (selectedCategoria) params.categoria_id = selectedCategoria.value;
-    if (selectedComuna) params.comuna_id = selectedComuna.value;
-
-    axios
-      .get("/proyectos/publicos", { params })
-      .then(res => {
-        const features = res.data.map(item => ({
-          type: "Feature",
-          geometry: item.geometria,
-          properties: {
-            proyecto_id: item.proyecto_id,
-            nombre: item.nombre,
-            sector: item.sector,
-            tipo: item.tipo,
-          }
+        const capasFormateadas = Object.entries(agrupadas).map(([tipo, features]) => ({
+          tipo,
+          data: {
+            type: "FeatureCollection",
+            features,
+          },
         }));
 
-        if (features.length === 0) {
-          setGeojsonData(null);
-          setMapBounds(null);
-          setMensaje("⚠️ No se encontraron resultados.");
-          setMostrarToast(true);
-          return;
-        }
-
-        const bounds = calcularBounds(features);
-        setGeojsonData({ type: "FeatureCollection", features });
-        setMapBounds(bounds);
-        setMensaje(`✅ Se encontraron ${features.length} proyecto(s).`);
-        setMostrarToast(true);
-      })
-      .catch(err => {
-        console.error("❌ Error al buscar proyectos:", err);
-        setMensaje("❌ Ocurrió un error al buscar.");
-        setMostrarToast(true);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleClearAll = () => {
-    setSelectedCategoria(null);
-    setSelectedComuna(null);
-    setGeojsonData(null);
-    setMapBounds(null);
+        setGeojsonData(capasFormateadas);
+        setMensajeUsuario({
+          tipo: "success",
+          texto: `Se encontraron ${geojson.features.length} proyecto(s).`,
+        });
+      } else {
+        setGeojsonData([]);
+        setMensajeUsuario({
+          tipo: "info",
+          texto: "No se encontraron proyectos para los filtros seleccionados.",
+        });
+      }
+    } catch (error) {
+      setMensajeUsuario({
+        tipo: "error",
+        texto: "Ocurrió un error al procesar los datos.",
+      });
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -113,53 +77,47 @@ function Home() {
       <Sidebar
         categorias={categorias}
         comunas={comunas}
-        selectedCategoria={selectedCategoria}
-        selectedComuna={selectedComuna}
-        onCategoriaChange={setSelectedCategoria}
-        onComunaChange={setSelectedComuna}
-        onBuscar={handleBuscar}
+        onResultados={handleResultados}
+        onToggleMinimizada={setSidebarMinimizada}
       />
 
       <div className="mapa">
         <div className="topbar right">
-
           <button className="btn-admin" onClick={() => navigate("/admin")}>
-            Área Admin
+            <Icono nombre="admin_panel_settings" /> Área Admin
           </button>
         </div>
 
-        <PavimentoMap geojsonData={geojsonData} setGeojsonData={setGeojsonData} bounds={mapBounds} />
-
-        {mostrarToast && (
-          <div className="toast-mensaje">
-            {mensaje}
-            <button onClick={() => setMostrarToast(false)}>✖</button>
+        {cargando && (
+          <div className="mensaje-info cargando">
+            <Icono nombre="progress_activity" size={20} />
+            Buscando proyectos...
           </div>
         )}
 
-        {loading && <p className="estado-busqueda"> <span className="material-symbols-outlined">refresh</span>
-          Buscando proyectos...</p>}
+        {mensajeUsuario && (
+          <div className={`toast-mensaje ${mensajeUsuario.tipo}`}>
+            <Icono
+              nombre={
+                mensajeUsuario.tipo === "success"
+                  ? "check_circle"
+                  : mensajeUsuario.tipo === "info"
+                  ? "info"
+                  : "error"
+              }
+              className="icon-toast"
+            />
+            {mensajeUsuario.texto}
+            <button onClick={() => setMensajeUsuario(null)}>✖</button>
+          </div>
+        )}
+
+        <MapaProyectos
+          capas={geojsonData}
+          limpiarCapas={() => setGeojsonData([])}
+          sidebarMinimizada={sidebarMinimizada}
+        />
       </div>
-
-      <FiltroModal
-        visible={mostrarModal}
-        categoria={selectedCategoria}
-        comuna={selectedComuna}
-        onRemoveCategoria={() => setSelectedCategoria(null)}
-        onRemoveComuna={() => setSelectedComuna(null)}
-        onClearAll={handleClearAll}
-        onClose={() => setMostrarModal(false)}
-      />
-
-      {(selectedCategoria || selectedComuna) && (
-        <button
-          className="filtro-fab"
-          onClick={() => setMostrarModal(true)}
-          title="Ver filtros activos"
-        >
-         <span>FILTROS</span> 
-        </button>
-      )}
     </div>
   );
 }

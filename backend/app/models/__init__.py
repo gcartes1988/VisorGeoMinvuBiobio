@@ -5,7 +5,7 @@ from .categoria import Categoria
 from .usuario import Usuario
 from .proyecto import Proyecto
 from .documento import Documento
-from .log_cambios import LogCambio  
+from .log_cambios import LogCambios 
 from .pavimento import Pavimento
 from .ciclovia import Ciclovia
 from .parque import Parque

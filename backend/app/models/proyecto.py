@@ -1,12 +1,15 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateTime, Enum
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base  # ✅ obligatorio
 import enum
+from datetime import datetime
+
 
 class EstadoProyectoEnum(enum.Enum):
     pendiente = "pendiente"
     aprobado = "aprobado"
     rechazado = "rechazado"
+
 
 class Proyecto(Base):
     __tablename__ = "proyecto"
@@ -15,9 +18,9 @@ class Proyecto(Base):
     nombre = Column(String, nullable=False)
     descripcion = Column(Text)
     categoria_id = Column(Integer, ForeignKey("categoria.id"))
-    estado_proyecto = Column(Enum(EstadoProyectoEnum), nullable=False)
+    estado_proyecto = Column(Enum(EstadoProyectoEnum), nullable=False, default=EstadoProyectoEnum.pendiente)
     elim_pendiente = Column(Boolean, default=False)
-    fecha_creacion = Column(DateTime)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
     fecha_aprobacion = Column(DateTime, nullable=True)
     creado_por_id = Column(Integer, ForeignKey("usuario.id"))
     aprobado_por_id = Column(Integer, ForeignKey("usuario.id"), nullable=True)
@@ -32,8 +35,5 @@ class Proyecto(Base):
     pavimentos = relationship("Pavimento", back_populates="proyecto", cascade="all, delete")
     ciclovias = relationship("Ciclovia", back_populates="proyecto", cascade="all, delete")
 
-    # Relación recursiva (proyecto padre)
+    # Relación recursiva
     proyecto_padre = relationship("Proyecto", remote_side=[id])
-    # en models/proyecto.py
-    pavimentos = relationship("Pavimento", back_populates="proyecto")
-

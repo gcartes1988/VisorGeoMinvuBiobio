@@ -13,10 +13,10 @@ class Pavimento(Base):
     tipo_calzada_id = Column(Integer, ForeignKey("tipo_calzada.id"), nullable=False)
     estado_avance_id = Column(Integer, ForeignKey("estado_avance.id"), nullable=False)
     longitud_metros = Column(Float, nullable=False)
-    geometria = Column(Geometry(geometry_type="LINESTRING", srid=4326), nullable=False)
+    geometria = Column(Geometry("LINESTRING", srid=4326), nullable=False)
 
     # Relaciones
     proyecto = relationship("Proyecto", back_populates="pavimentos")
     comuna = relationship("Comuna", back_populates="pavimentos")
-    tipo_calzada = relationship("TipoCalzada")
-    estado_avance = relationship("EstadoAvance")
+    tipo_calzada = relationship("TipoCalzada", backref="pavimentos")
+    estado_avance = relationship("EstadoAvance", backref="pavimentos")

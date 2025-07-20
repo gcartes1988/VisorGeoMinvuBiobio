@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
 
       if (user) {
         try {
-          const res = await api.get("/me"); // ✅ Token lo agrega el interceptor
+          const res = await api.get("me"); // ✅ Token lo agrega el interceptor
           setPerfil(res.data);
         } catch (error) {
           console.error("❌ Error al obtener perfil:", error);

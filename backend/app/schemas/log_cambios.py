@@ -1,16 +1,21 @@
+# backend/app/schemas/log_cambios.py
+
 from pydantic import BaseModel
+from typing import Optional, Any
 from datetime import datetime
-from typing import Optional
 
 class LogCambioOut(BaseModel):
     id: int
-    proyecto_id: Optional[int]
-    usuario_id: Optional[int]
-    accion: str
-    campo_modificado: str
-    valor_anterior: Optional[str]
-    valor_nuevo: Optional[str]
     fecha: datetime
+    proyecto_id: Optional[int]
+    nombre_proyecto: Optional[str]
+    usuario_id: Optional[int]
+    nombre_usuario: Optional[str]
+    accion: str
+    campo_modificado: Optional[str]
+    valor_anterior: Optional[Any]
+    valor_nuevo: Optional[Any]
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }

@@ -10,4 +10,3 @@ class Categoria(Base):
     descripcion = Column(Text)
 
     proyectos = relationship("Proyecto", back_populates="categoria")
-
