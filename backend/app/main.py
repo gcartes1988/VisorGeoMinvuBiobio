@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from sqlalchemy.orm import Session
+from app.middleware.auth_middleware import AuthMiddleware
+
 
 from app.database import get_db
 from app.routes import (
@@ -34,6 +36,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(AuthMiddleware)
 
 # Rutas principales
 app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])

@@ -89,7 +89,9 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
   };
 
   const proyectoSeleccionado = proyectos.find(p => p.id === parseInt(proyectoExistente));
-  const categoriaIdSeleccionada = proyectoSeleccionado?.categoria_id;
+  const categoriaIdSeleccionada =
+  proyectoSeleccionado?.categoria?.id || proyectoSeleccionado?.categoria_id;
+
 
   if (!usuario || categorias.length === 0) {
     return (
@@ -183,15 +185,22 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
               <p><strong>Estado:</strong> {proyectoSeleccionado?.estado_proyecto}</p>
             </div>
 
-            {categoriaIdSeleccionada === 1 && (
-              <FormularioPavimento proyectoId={proyectoSeleccionado.id} />
-            )}
-            {categoriaIdSeleccionada === 2 && (
-              <FormularioCiclovia proyectoId={proyectoSeleccionado.id} />
-            )}
-            {categoriaIdSeleccionada === 3 && (
-              <FormularioParque proyectoId={proyectoSeleccionado.id} />
-            )}
+            {(() => {
+  const formularios = {
+    1: FormularioPavimento,
+    2: FormularioCiclovia,
+    3: FormularioParque,
+  };
+
+  const FormularioEspecifico = formularios[categoriaIdSeleccionada];
+
+  return FormularioEspecifico ? (
+    <FormularioEspecifico proyectoId={proyectoSeleccionado.id} />
+  ) : (
+    <p className="text-orange">⚠️ Esta categoría aún no tiene un formulario implementado.</p>
+  );
+})()}
+
           </div>
         )}
 

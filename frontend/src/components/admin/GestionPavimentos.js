@@ -78,14 +78,26 @@ const GestionPavimentos = () => {
                       <td>{renderEstado(p.estado_avance?.nombre)}</td>
                       {perfil?.rol !== "visitante" && (
                         <td>
-                          <div className="btn-acciones">
-                            <button className="btn-icono" onClick={() => handleEditar(p.id)}>
-                              <span className="material-symbols-outlined">edit</span>
-                            </button>
-                            <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
-                          </div>
+                     <div className="btn-acciones">
+  <button
+    className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
+    onClick={() => p.editable && handleEditar(p.id)}
+    disabled={!p.editable}
+    title={p.editable ? "Editar pavimento" : "Solo editable por su creador o un administrador"}
+  >
+    <span className="material-symbols-outlined">edit</span>
+  </button>
+
+  {perfil.rol === "admin" && (
+    <button
+      className="btn-icono btn-eliminar"
+      onClick={() => handleEliminar(p.id)}
+      title="Eliminar pavimento"
+    >
+      <span className="material-symbols-outlined">delete</span>
+    </button>
+  )}
+</div>
                         </td>
                       )}
                     </tr>

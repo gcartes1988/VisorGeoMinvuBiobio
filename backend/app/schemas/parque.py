@@ -37,6 +37,7 @@ class ParqueOut(BaseModel):
     superficie_ha: Optional[float]
     fuente_financiamiento_id: Optional[int]
     geometria: Dict
+    editable: Optional[bool] = False  
 
     model_config = {"from_attributes": True}
 

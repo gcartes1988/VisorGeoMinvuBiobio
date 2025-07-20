@@ -27,8 +27,14 @@ async def crear_parque_con_proyecto(
         payload = ParqueCreate(**body)
         geojson = payload.geometria if isinstance(payload.geometria, dict) else json.loads(payload.geometria)
 
-        if not geojson.get("type") or not geojson.get("coordinates"):
-            raise HTTPException(status_code=400, detail="❌ Geometría inválida.")
+        if (
+            not geojson.get("type") 
+            or not geojson.get("coordinates") 
+            or not isinstance(geojson["coordinates"], list) 
+            or len(geojson["coordinates"]) == 0
+        ):
+            raise HTTPException(status_code=400, detail="❌ Geometría inválida o vacía.")
+
 
         geom_pg = from_shape(shape(geojson), srid=4326)
 
@@ -56,6 +62,9 @@ async def crear_parque_con_proyecto(
         db.commit()
         db.refresh(nuevo)
 
+        # ✅ Calcular si el parque es editable por el usuario actual
+        es_editable = current_user.rol == "admin" or nuevo_proyecto.creado_por_id == current_user.id
+
         return ParqueOut(
             id=nuevo.id,
             proyecto_id=nuevo.proyecto_id,
@@ -64,13 +73,15 @@ async def crear_parque_con_proyecto(
             direccion=nuevo.direccion,
             superficie_ha=nuevo.superficie_ha,
             fuente_financiamiento_id=nuevo.fuente_financiamiento_id,
-            geometria=mapping(shape(geojson))
+            geometria=mapping(shape(geojson)),
+            editable=es_editable  # ✅ agregado correctamente
         )
 
     except Exception as e:
         db.rollback()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"❌ Error al crear parque completo: {str(e)}")
+
 
 @router.get("/", response_model=list[ParqueDetalleOut])
 def listar_parques(db: Session = Depends(get_db)):
@@ -103,32 +114,44 @@ def listar_parques(db: Session = Depends(get_db)):
             continue
     return resultados
 
-@router.get("/{parque_id}", response_model=ParqueDetalleOut)
-def obtener_parque(parque_id: int, db: Session = Depends(get_db)):
-    p = db.query(Parque).options(
+@router.get("/", response_model=list[ParqueDetalleOut])
+def listar_parques(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)  # 👈 Importante
+):
+    parques = db.query(Parque).options(
         selectinload(Parque.comuna),
         selectinload(Parque.fuente_financiamiento),
         selectinload(Parque.proyecto)
-    ).filter(Parque.id == parque_id).first()
+    ).all()
 
-    if not p:
-        raise HTTPException(status_code=404, detail="❌ Parque no encontrado")
+    resultados = []
+    for p in parques:
+        try:
+            if p.geometria is None:
+                continue
+            geojson_geom = mapping(wkb_loads(bytes(p.geometria.data)))
 
-    geojson_geom = mapping(wkb_loads(bytes(p.geometria.data)))
+            es_editable = current_user.rol == "admin" or (p.proyecto and p.proyecto.creado_por_id == current_user.id)
 
-    return ParqueDetalleOut(
-        id=p.id,
-        proyecto_id=p.proyecto_id,
-        nombre=p.nombre,
-        direccion=p.direccion,
-        superficie_ha=p.superficie_ha,
-        fuente_financiamiento_id=p.fuente_financiamiento_id,
-        comuna_id=p.comuna_id,
-        geometria=geojson_geom,
-        comuna=p.comuna,
-        fuente_financiamiento=p.fuente_financiamiento,
-        proyecto=p.proyecto
-    )
+            resultados.append({
+                "id": p.id,
+                "proyecto_id": p.proyecto_id,
+                "nombre": p.nombre,
+                "direccion": p.direccion,
+                "superficie_ha": p.superficie_ha,
+                "fuente_financiamiento_id": p.fuente_financiamiento_id,
+                "comuna_id": p.comuna_id,
+                "geometria": geojson_geom,
+                "comuna": p.comuna,
+                "fuente_financiamiento": p.fuente_financiamiento,
+                "proyecto": p.proyecto,
+                "editable": es_editable  
+            })
+        except:
+            continue
+    return resultados
+
 
 @router.put("/{parque_id}", response_model=dict)
 def actualizar_parque(

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
-import Icono from "../../components/Icono"; // 👈 componente reutilizable
+import Icono from "../../components/Icono"; 
 import "../../css/admin.css";
 
 const DashboardResumen = () => {

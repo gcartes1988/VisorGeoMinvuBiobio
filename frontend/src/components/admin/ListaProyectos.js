@@ -60,7 +60,7 @@ function ListaProyectos() {
   return (
     <div className="lista">
       <div className="titulo-colapsable" onClick={() => setColapsado(!colapsado)}>
-        <h2>Gestión de proyectos</h2><br></br>
+        <h2>Gestión de proyectos</h2><br />
         <button className="btn-toggle">
           <Icono nombre={colapsado ? "expand_more" : "expand_less"} />
         </button>
@@ -87,13 +87,26 @@ function ListaProyectos() {
                     {perfil?.rol !== "visitante" && (
                       <td>
                         <div className="btn-acciones">
-                          <button className="btn-editar" onClick={() => handleEditar(p.id)}>
-                            Editar
-                          </button>
-                          <button className="btn-eliminar" onClick={() => handleEliminar(p.id)}>
-                            Eliminar
-                          </button>
-                        </div>
+  <button
+    className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
+    onClick={() => p.editable && handleEditar(p.id)}
+    disabled={!p.editable}
+    title={p.editable ? "Editar pavimento" : "Solo editable por su creador o un administrador"}
+  >
+    <span className="material-symbols-outlined">edit</span>
+  </button>
+
+  {perfil.rol === "admin" && (
+    <button
+      className="btn-icono btn-eliminar"
+      onClick={() => handleEliminar(p.id)}
+      title="Eliminar pavimento"
+    >
+      <span className="material-symbols-outlined">delete</span>
+    </button>
+  )}
+</div>
+
                       </td>
                     )}
                   </tr>

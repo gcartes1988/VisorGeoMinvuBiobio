@@ -48,5 +48,8 @@ class PavimentoOut(BaseModel):
     comuna: ComunaOut
     estado_avance: EstadoAvanceOut
     tipos_pavimento: List[TipoPavimentoOut]
+    editable: bool 
+
+
     class Config:
         orm_mode = True

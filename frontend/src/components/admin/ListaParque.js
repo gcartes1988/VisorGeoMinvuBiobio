@@ -95,10 +95,26 @@ function ListaParques() {
                     <td>{renderEstado(p.proyecto?.estado_proyecto)}</td>
                     {perfil?.rol !== "visitante" && (
                       <td>
-                        <div className="btn-acciones">
-                          <button className="btn-editar" onClick={() => handleEditar(p.id)}>Editar</button>
-                          <button className="btn-eliminar" onClick={() => handleEliminar(p.id)}>Eliminar</button>
-                        </div>
+<div className="btn-acciones">
+    <button
+      className="btn-icono"
+      onClick={() => p.editable && handleEditar(p.id)}
+      disabled={!p.editable}
+      title={p.editable ? "Editar parque" : "No tienes permisos para editar"}
+    >
+      <span className="material-symbols-outlined">edit</span>
+    </button>
+
+    {perfil.rol === "admin" && (
+      <button
+        className="btn-icono btn-eliminar"
+        onClick={() => handleEliminar(p.id)}
+        title="Eliminar parque"
+      >
+        <span className="material-symbols-outlined">delete</span>
+      </button>
+    )}
+  </div>
                       </td>
                     )}
                   </tr>

@@ -1,4 +1,7 @@
 import json
+import traceback
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import text
@@ -6,19 +9,20 @@ from shapely.geometry import shape, mapping
 from shapely.wkb import loads as wkb_loads
 from geoalchemy2.shape import from_shape
 
-from typing import List
 from app.database import get_db
 from app.models.pavimento import Pavimento
-from app.models.log_cambios import LogCambios  # ✅ import corregido
+from app.models.proyecto import Proyecto
+from app.models.log_cambios import LogCambios
 from app.schemas.pavimento import PavimentoCreate, PavimentoUpdate, PavimentoOut
-from app.routes.usuario import get_current_user
-from app.models.usuario import Usuario
+
 
 router = APIRouter(prefix="/pavimentos", tags=["Pavimentos"])
 
 @router.post("/", response_model=PavimentoOut)
 async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
     try:
+        user = request.state.user
+
         body = await request.json()
         print("📨 BODY RECIBIDO:", json.dumps(body, indent=2, ensure_ascii=False))
 
@@ -39,10 +43,19 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
             estado_avance_id=payload.estado_avance_id,
             geometria=geom_pg
         )
+
         db.add(nuevo)
         db.commit()
         db.refresh(nuevo)
 
+        # Forzar carga de relaciones si es necesario
+        try:
+            _ = nuevo.comuna.id
+            _ = nuevo.estado_avance.id
+        except:
+            db.refresh(nuevo, attribute_names=["comuna", "estado_avance"])
+
+        # Insertar tipos de pavimento
         for tipo_id in payload.tipos_pavimento:
             db.execute(
                 text("INSERT INTO pavimento_tipo_pavimento (pavimento_id, tipo_pavimento_id) VALUES (:pid, :tid)"),
@@ -56,6 +69,15 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
 
         geojson_geom = mapping(shape(geojson))
 
+        # Verificar si el usuario puede editar
+        editable = False
+        if user and user["rol"] == "admin":
+            editable = True
+        else:
+            proyecto = db.query(Proyecto).filter(Proyecto.id == nuevo.proyecto_id).first()
+            if proyecto and proyecto.creado_por_id == user["usuario_id"]:
+                editable = True
+
         return PavimentoOut(
             id=nuevo.id,
             proyecto_id=nuevo.proyecto_id,
@@ -65,20 +87,29 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
             geometria=geojson_geom,
             comuna={"id": nuevo.comuna.id, "nombre": nuevo.comuna.nombre},
             estado_avance={"id": nuevo.estado_avance.id, "nombre": nuevo.estado_avance.nombre},
-            tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos]
+            tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos],
+            editable=editable
         )
 
     except HTTPException as e:
         raise e
     except Exception as e:
         db.rollback()
+        print("💥 ERROR INTERNO EN CREACIÓN DE PAVIMENTO:")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
 
+
 @router.get("/", response_model=List[PavimentoOut])
-def listar_pavimentos(db: Session = Depends(get_db)):
+def listar_pavimentos(request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user:
+        raise HTTPException(status_code=401, detail="❌ No autenticado")
+
     pavimentos = db.query(Pavimento).options(
         selectinload(Pavimento.comuna),
-        selectinload(Pavimento.estado_avance)
+        selectinload(Pavimento.estado_avance),
+        selectinload(Pavimento.proyecto)
     ).all()
 
     resultados = []
@@ -90,20 +121,31 @@ def listar_pavimentos(db: Session = Depends(get_db)):
             ).fetchall()
 
             geojson_geom = mapping(wkb_loads(bytes(p.geometria.data)))
-            resultados.append(PavimentoOut(
-                id=p.id,
-                proyecto_id=p.proyecto_id,
-                sector=p.sector,
-                longitud_metros=p.longitud_metros,
-                tipo_calzada_id=p.tipo_calzada_id,
-                geometria=geojson_geom,
-                comuna={"id": p.comuna.id, "nombre": p.comuna.nombre},
-                estado_avance={"id": p.estado_avance.id, "nombre": p.estado_avance.nombre},
-                tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos]
-            ))
+
+            editable = False
+            if p.proyecto and (
+                user["rol"] == "admin" or p.proyecto.creado_por_id == user["usuario_id"]
+            ):
+                editable = True
+
+            resultados.append({
+                "id": p.id,
+                "proyecto_id": p.proyecto_id,
+                "sector": p.sector,
+                "longitud_metros": p.longitud_metros,
+                "tipo_calzada_id": p.tipo_calzada_id,
+                "geometria": geojson_geom,
+                "comuna": {"id": p.comuna.id, "nombre": p.comuna.nombre},
+                "estado_avance": {"id": p.estado_avance.id, "nombre": p.estado_avance.nombre},
+                "tipos_pavimento": [{"id": t.id, "nombre": t.nombre} for t in tipos],
+                "editable": editable
+            })
+
         except Exception:
             continue
+
     return resultados
+
 
 @router.get("/{pavimento_id}", response_model=PavimentoOut)
 def obtener_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
@@ -137,12 +179,24 @@ def obtener_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
 def actualizar_pavimento(
     pavimento_id: int,
     payload: PavimentoUpdate,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    request: Request,
+    db: Session = Depends(get_db)
 ):
+    user = request.state.user
+    if not user:
+        raise HTTPException(status_code=401, detail="❌ No autenticado")
+
     pavimento = db.query(Pavimento).filter(Pavimento.id == pavimento_id).first()
     if not pavimento:
         raise HTTPException(status_code=404, detail="❌ Pavimento no encontrado.")
+
+    proyecto = db.query(Proyecto).filter(Proyecto.id == pavimento.proyecto_id).first()
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="❌ Proyecto asociado no encontrado")
+
+    # 🔐 Validación de permisos
+    if user["rol"] != "admin" and proyecto.creado_por_id != user["usuario_id"]:
+        raise HTTPException(status_code=403, detail="❌ No tienes permisos para editar este pavimento.")
 
     try:
         cambios = []
@@ -156,7 +210,7 @@ def actualizar_pavimento(
             if pavimento.geometria != nueva_geom_shape:
                 cambios.append(LogCambios(
                     proyecto_id=pavimento.proyecto_id,
-                    usuario_id=current_user.id,
+                    usuario_id=user["usuario_id"],
                     accion="edición",
                     campo_modificado="geometría",
                     valor_anterior=str(pavimento.geometria),
@@ -164,7 +218,7 @@ def actualizar_pavimento(
                 ))
                 pavimento.geometria = nueva_geom_shape
 
-        # Otros campos modificables
+        # Otros campos
         for attr, value in payload.dict(exclude_unset=True).items():
             if attr in ["geometria", "tipos_pavimento"]:
                 continue
@@ -172,7 +226,7 @@ def actualizar_pavimento(
             if value != valor_anterior:
                 cambios.append(LogCambios(
                     proyecto_id=pavimento.proyecto_id,
-                    usuario_id=current_user.id,
+                    usuario_id=user["usuario_id"],
                     accion="edición",
                     campo_modificado=attr,
                     valor_anterior=str(valor_anterior),
@@ -180,7 +234,7 @@ def actualizar_pavimento(
                 ))
                 setattr(pavimento, attr, value)
 
-        # Actualizar tabla intermedia (tipos de pavimento)
+        # Tabla intermedia
         db.execute(
             text("DELETE FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid"),
             {"pid": pavimento_id}
@@ -192,7 +246,6 @@ def actualizar_pavimento(
                 {"pid": pavimento_id, "tid": tipo_id}
             )
 
-        # Mensaje según si hubo cambios
         if not cambios:
             return {"mensaje": "⚠️ No se detectaron cambios para actualizar."}
 
@@ -204,21 +257,25 @@ def actualizar_pavimento(
         return {"mensaje": "✅ Pavimento actualizado correctamente"}
 
     except Exception as e:
-        import traceback
         print("💥 ERROR INTERNO AL EDITAR PAVIMENTO:")
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
 
-
 @router.delete("/{pavimento_id}", response_model=dict)
-def eliminar_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
+def eliminar_pavimento(pavimento_id: int, request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user:
+        raise HTTPException(status_code=401, detail="❌ No autenticado")
+
+    if user["rol"] != "admin":
+        raise HTTPException(status_code=403, detail="❌ Solo los administradores pueden eliminar pavimentos.")
+
     pavimento = db.query(Pavimento).filter(Pavimento.id == pavimento_id).first()
     if not pavimento:
         raise HTTPException(status_code=404, detail="❌ Pavimento no encontrado.")
 
     try:
-        # 🔁 Eliminar relaciones primero
         db.execute(
             text("DELETE FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid"),
             {"pid": pavimento_id}
@@ -231,4 +288,5 @@ def eliminar_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"❌ Error al eliminar pavimento: {str(e)}")
+
 

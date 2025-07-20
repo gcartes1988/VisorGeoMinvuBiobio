@@ -1,21 +1,174 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import text
 from sqlalchemy import and_
 from shapely.wkb import loads as wkb_loads
 from shapely.geometry import mapping
 from typing import List, Optional
+from sqlalchemy import union_all, select
+
 
 from app.database import get_db
 from app.models.proyecto import Proyecto
 from app.models.pavimento import Pavimento
 from app.models.ciclovia import Ciclovia
 from app.models.parque import Parque
-from app.models.usuario import Usuario
 from app.schemas.proyecto import ProyectoCreate as ProyectoIn, ProyectoOut
-from app.dependencies import get_current_user
+from app.schemas.proyecto import ProyectoOut
+from app.schemas.proyecto import ProyectoOutConCategoria
+
+
+
+
 
 router = APIRouter(prefix="/proyectos", tags=["Proyectos"])
+
+# Crear proyecto
+@router.post("/", response_model=ProyectoOut)
+def crear_proyecto(proyecto_in: ProyectoIn, request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    if user["rol"] == "editor":
+        proyecto_in.estado_proyecto = "pendiente"
+
+    proyecto = Proyecto(**proyecto_in.dict(), creado_por_id=user["usuario_id"])
+    db.add(proyecto)
+    db.commit()
+    db.refresh(proyecto)
+    return proyecto
+
+# Listar todos los proyectos con campo editable
+@router.get("/")
+def listar_proyectos(request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    proyectos = db.query(Proyecto).options(selectinload(Proyecto.categoria)).filter(Proyecto.elim_pendiente == False).all()
+
+    salida = []
+    for p in proyectos:
+        editable = user["rol"] == "admin" or p.creado_por_id == user["usuario_id"]
+        salida.append({
+            "id": p.id,
+            "nombre": p.nombre,
+            "descripcion": p.descripcion,
+            "categoria": {
+                "id": p.categoria.id,
+                "nombre": p.categoria.nombre
+            } if p.categoria else None,
+            "estado_proyecto": p.estado_proyecto,
+            "editable": editable
+        })
+
+    return salida
+
+# Obtener un proyecto por ID
+@router.get("/{id}", response_model=ProyectoOut)
+def obtener_proyecto(id: int, db: Session = Depends(get_db)):
+    proyecto = db.query(Proyecto).options(selectinload(Proyecto.categoria)).get(id)
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return proyecto
+
+
+
+# 🔍 Obtener proyectos aprobados que aún no están en pavimento, parque ni ciclovía
+@router.get("/proyectos/huerfanos", response_model=List[ProyectoOutConCategoria])
+def listar_proyectos_huerfanos(db: Session = Depends(get_db)):
+    subquery_pavimento = db.query(models.Pavimento.proyecto_id)
+    subquery_parque = db.query(models.Parque.proyecto_id)
+    subquery_ciclovia = db.query(models.Ciclovia.proyecto_id)
+
+    sub_union = subquery_pavimento.union(subquery_parque).union(subquery_ciclovia).subquery()
+
+    proyectos = db.query(models.Proyecto).options(
+        selectinload(models.Proyecto.categoria)  # para que venga embebida en el JSON
+    ).filter(
+        models.Proyecto.estado_proyecto == "aprobado",
+        ~models.Proyecto.id.in_(select(sub_union))
+    ).all()
+
+    return proyectos
+
+# Actualizar proyecto
+@router.put("/{id}", response_model=ProyectoOut)
+def actualizar_proyecto(id: int, datos: ProyectoIn, db: Session = Depends(get_db)):
+    proyecto = db.query(Proyecto).get(id)
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    for campo, valor in datos.dict().items():
+        setattr(proyecto, campo, valor)
+    db.commit()
+    db.refresh(proyecto)
+    return proyecto
+
+# Eliminar proyecto (soft delete)
+@router.delete("/{id}")
+def eliminar_proyecto(id: int, db: Session = Depends(get_db)):
+    proyecto = db.query(Proyecto).get(id)
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    proyecto.elim_pendiente = True
+    db.commit()
+    return {"detail": "Proyecto marcado como eliminado"}
+
+# Aprobar proyecto
+@router.put("/{id}/aprobar")
+def aprobar_proyecto(id: int, request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user or user["rol"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    proyecto = db.query(Proyecto).filter_by(id=id).first()
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+    proyecto.estado_proyecto = "aprobado"
+    proyecto.aprobado_por_id = user["usuario_id"]
+    db.commit()
+    return {"mensaje": "✅ Proyecto aprobado correctamente"}
+
+# Rechazar proyecto
+@router.put("/{id}/rechazar")
+def rechazar_proyecto(id: int, request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user or user["rol"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    proyecto = db.query(Proyecto).filter_by(id=id).first()
+    if not proyecto:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+    proyecto.estado_proyecto = "rechazado"
+    proyecto.aprobado_por_id = user["usuario_id"]
+    db.commit()
+    return {"mensaje": "⚠️ Proyecto rechazado correctamente"}
+
+# Listar solo los pendientes (para admin)
+@router.get("/pendientes")
+def listar_proyectos_pendientes(request: Request, db: Session = Depends(get_db)):
+    user = request.state.user
+    if not user or user["rol"] != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    proyectos = db.query(Proyecto).options(selectinload(Proyecto.categoria)).filter(
+        Proyecto.estado_proyecto == "pendiente",
+        Proyecto.elim_pendiente == False
+    ).all()
+
+    return [{
+        "id": p.id,
+        "nombre": p.nombre,
+        "descripcion": p.descripcion,
+        "categoria": {
+            "id": p.categoria.id,
+            "nombre": p.categoria.nombre
+        } if p.categoria else None,
+        "estado_proyecto": p.estado_proyecto
+    } for p in proyectos]
 
 # Ruta pública GeoJSON
 @router.get("/publicos", tags=["Proyectos Públicos"])
@@ -45,7 +198,6 @@ def obtener_feature_collection(
     if not categorias:
         categorias = [1, 2, 3]
 
-    # Pavimentos
     if 1 in categorias:
         pav_query = db.query(Pavimento).join(Pavimento.proyecto).filter(
             Proyecto.estado_proyecto == 'aprobado',
@@ -58,7 +210,6 @@ def obtener_feature_collection(
             if f:
                 features.append(f)
 
-    # Ciclovías
     if 2 in categorias:
         cic_query = db.query(Ciclovia).join(Ciclovia.proyecto).filter(
             Proyecto.estado_proyecto == 'aprobado',
@@ -71,7 +222,6 @@ def obtener_feature_collection(
             if f:
                 features.append(f)
 
-    # Parques
     if 3 in categorias:
         parque_query = db.query(Parque)\
             .options(selectinload(Parque.proyecto))\
@@ -102,57 +252,6 @@ def obtener_feature_collection(
         "type": "FeatureCollection",
         "features": features
     }
-
-
-# Crear proyecto (editor o admin)
-@router.post("/", response_model=ProyectoOut)
-def crear_proyecto(
-    proyecto_in: ProyectoIn,
-    db: Session = Depends(get_db),
-    usuario: Usuario = Depends(get_current_user)
-):
-    if usuario.rol == "editor":
-        proyecto_in.estado_proyecto = "pendiente"
-    proyecto = Proyecto(**proyecto_in.dict(), creado_por_id=usuario.id)
-    db.add(proyecto)
-    db.commit()
-    db.refresh(proyecto)
-    return proyecto
-
-# Listar todos los proyectos
-@router.get("/", response_model=List[ProyectoOut])
-def listar_proyectos(db: Session = Depends(get_db)):
-    return db.query(Proyecto).options(selectinload(Proyecto.categoria)).filter(Proyecto.elim_pendiente == False).all()
-
-# Obtener un proyecto por ID
-@router.get("/{id}", response_model=ProyectoOut)
-def obtener_proyecto(id: int, db: Session = Depends(get_db)):
-    proyecto = db.query(Proyecto).options(selectinload(Proyecto.categoria)).get(id)
-    if not proyecto:
-        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-    return proyecto
-
-# Actualizar proyecto
-@router.put("/{id}", response_model=ProyectoOut)
-def actualizar_proyecto(id: int, datos: ProyectoIn, db: Session = Depends(get_db)):
-    proyecto = db.query(Proyecto).get(id)
-    if not proyecto:
-        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-    for campo, valor in datos.dict().items():
-        setattr(proyecto, campo, valor)
-    db.commit()
-    db.refresh(proyecto)
-    return proyecto
-
-# Eliminar proyecto (soft delete)
-@router.delete("/{id}")
-def eliminar_proyecto(id: int, db: Session = Depends(get_db)):
-    proyecto = db.query(Proyecto).get(id)
-    if not proyecto:
-        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-    proyecto.elim_pendiente = True
-    db.commit()
-    return {"detail": "Proyecto marcado como eliminado"}
 
 # Totales públicos
 @router.get("/publicos/totales")

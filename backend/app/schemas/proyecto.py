@@ -53,3 +53,10 @@ class ProyectoOutSimple(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class ProyectoOutConCategoria(ProyectoOut):
+    categoria: Optional[CategoriaOut]
+
+    model_config = {
+        "from_attributes": True
+    }
