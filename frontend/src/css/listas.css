@@ -21,10 +21,17 @@
 /* ──────────────────────────────────────────────
    📊 TABLA BASE
 ────────────────────────────────────────────── */
+.tabla-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  display: block;
+}
+
 .lista table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  table-layout: auto;
 }
 
 .lista th,
@@ -34,6 +41,7 @@
   border-bottom: 1px solid #ddd;
   vertical-align: middle;
   word-break: break-word;
+  white-space: nowrap;
 }
 
 .lista th {
@@ -51,11 +59,6 @@
   transform: scale(1.2);
 }
 
-.tabla-scroll {
-  overflow-x: auto;
-  max-width: 100%;
-}
-
 .tabla-lista td {
   vertical-align: middle;
 }
@@ -65,14 +68,31 @@
   width: 130px;
 }
 
+.btn-acciones {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Anchos mínimos por columna para evitar salto vertical */
+.lista th:nth-child(2),
+.lista td:nth-child(2) {
+  min-width: 180px; /* Sector */
+}
+
+.lista th:nth-child(3),
+.lista td:nth-child(3) {
+  min-width: 150px; /* Comuna */
+}
+
+.lista th:nth-child(4),
+.lista td:nth-child(4) {
+  min-width: 160px; /* Estado */
+}
+
 /* ──────────────────────────────────────────────
    🛠 BOTONES
 ────────────────────────────────────────────── */
-.lista .btn-acciones {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .lista button {
   padding: 0.4rem 0.8rem;
   border: none;
@@ -91,7 +111,7 @@
   color: white;
 }
 
-/* Iconos con estilo pill (más redondeado) */
+/* Iconos con estilo pill */
 .btn-icono {
   border: none;
   background-color: var(--neutral);
@@ -112,7 +132,7 @@
 }
 
 /* ──────────────────────────────────────────────
-   🟢 ESTADOS (aprobado, pendiente, rechazado)
+   🟢 ESTADOS
 ────────────────────────────────────────────── */
 .estado {
   display: flex;
@@ -177,7 +197,7 @@
 }
 
 /* ──────────────────────────────────────────────
-   🎨 ICONOS (Material Symbols)
+   🎨 ICONOS
 ────────────────────────────────────────────── */
 .material-symbols-outlined {
   font-variation-settings:
@@ -187,7 +207,7 @@
     'opsz' 20;
 }
 
-/* Vista compacta para Dashboard */
+/* Vista compacta opcional */
 .lista.compacta {
   padding: 0;
   margin: 0;

@@ -8,7 +8,7 @@ const leyenda = [
 ];
 
 export default function LeyendaMapa({ sidebarVisible }) {
-  const [abierto, setAbierto] = useState(true);
+  const [abierto, setAbierto] = useState(false);
 
   return (
     <div
