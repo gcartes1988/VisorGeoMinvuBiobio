@@ -59,7 +59,6 @@ const FormularioParque = ({ modoEdicion = false, parqueId = null, proyectoIdSele
   const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
 
-  // Cargar proyecto_id si se pasa como prop
   useEffect(() => {
     if (proyectoIdSeleccionado) {
       setFormData((prev) => ({ ...prev, proyecto_id: proyectoIdSeleccionado }));
@@ -137,8 +136,6 @@ const FormularioParque = ({ modoEdicion = false, parqueId = null, proyectoIdSele
       return;
     }
 
-    console.log("🧾 Proyecto ID actual:", formData.proyecto_id);  // <- console log agregado
-
     if (!formData.proyecto_id) {
       setError("❌ No se ha asociado un proyecto válido.");
       return;
@@ -167,58 +164,65 @@ const FormularioParque = ({ modoEdicion = false, parqueId = null, proyectoIdSele
   };
 
   return (
-    <form className="formulario" onSubmit={handleSubmit}>
-      <h2>{modoEdicion ? "Editar Parque" : "Crear Parque"}</h2>
+    <div className="formulario-container">
+      <form onSubmit={handleSubmit}>
+        <h2>{modoEdicion ? "Editar Parque" : "Crear Parque"}</h2>
 
-      <label>Nombre</label>
-      <input type="text" value={formData.nombre} onChange={(e) => handleChange("nombre", e.target.value)} required />
+        <label>Nombre</label>
+        <input type="text" value={formData.nombre} onChange={(e) => handleChange("nombre", e.target.value)} required />
 
-      <label>Dirección</label>
-      <input type="text" value={formData.direccion} onChange={(e) => handleChange("direccion", e.target.value)} />
+        <label>Dirección</label>
+        <input type="text" value={formData.direccion} onChange={(e) => handleChange("direccion", e.target.value)} />
 
-      <label>Superficie (ha)</label>
-      <input type="number" step="0.01" value={formData.superficie_ha} onChange={(e) => handleChange("superficie_ha", e.target.value)} />
+        <label>Superficie (ha)</label>
+        <input type="number" step="0.01" value={formData.superficie_ha} onChange={(e) => handleChange("superficie_ha", e.target.value)} />
 
-      <label>Comuna</label>
-      <Select
-        options={comunas.map((c) => ({ value: c.id, label: c.nombre }))}
-        value={comunas.find((c) => c.id === formData.comuna_id) && {
-          value: formData.comuna_id,
-          label: comunas.find((c) => c.id === formData.comuna_id)?.nombre,
-        }}
-        onChange={(opt) => handleChange("comuna_id", opt.value)}
-      />
+        <label>Comuna</label>
+        <Select
+          options={comunas.map((c) => ({ value: c.id, label: c.nombre }))}
+          value={comunas.find((c) => c.id === formData.comuna_id) && {
+            value: formData.comuna_id,
+            label: comunas.find((c) => c.id === formData.comuna_id)?.nombre,
+          }}
+          onChange={(opt) => handleChange("comuna_id", opt.value)}
+        />
 
-      <label>Fuente de Financiamiento</label>
-      <Select
-        options={fuentes.map((f) => ({ value: f.id, label: f.nombre }))}
-        value={fuentes.find((f) => f.id === formData.fuente_financiamiento_id) && {
-          value: formData.fuente_financiamiento_id,
-          label: fuentes.find((f) => f.id === formData.fuente_financiamiento_id)?.nombre,
-        }}
-        onChange={(opt) => handleChange("fuente_financiamiento_id", opt?.value || null)}
-        isClearable
-      />
+        <label>Fuente de Financiamiento</label>
+        <Select
+          options={fuentes.map((f) => ({ value: f.id, label: f.nombre }))}
+          value={fuentes.find((f) => f.id === formData.fuente_financiamiento_id) && {
+            value: formData.fuente_financiamiento_id,
+            label: fuentes.find((f) => f.id === formData.fuente_financiamiento_id)?.nombre,
+          }}
+          onChange={(opt) => handleChange("fuente_financiamiento_id", opt?.value || null)}
+          isClearable
+        />
 
-      <label>Geometría (GeoJSON o ArcGIS JSON)</label>
-      <textarea
-        rows={6}
-        value={formData.geometria}
-        onChange={(e) => handleChange("geometria", e.target.value)}
-        required
-        style={{ border: `2px solid ${geoValido ? "green" : "red"}`, width: "100%", fontFamily: "monospace", padding: "8px" }}
-      />
-      <small style={{ color: geoValido ? "#666" : "red" }}>
-        {geoValido ? "✅ Geometría válida (GeoJSON o ArcGIS JSON transformado)" : "❌ Formato no reconocido o inválido."}
-      </small>
+        <label>Geometría (GeoJSON o ArcGIS JSON)</label>
+        <textarea
+          rows={6}
+          value={formData.geometria}
+          onChange={(e) => handleChange("geometria", e.target.value)}
+          required
+          style={{
+            border: `2px solid ${geoValido ? "green" : "red"}`,
+            width: "100%",
+            fontFamily: "monospace",
+            padding: "8px",
+          }}
+        />
+        <small style={{ color: geoValido ? "#666" : "red" }}>
+          {geoValido ? "✅ Geometría válida (GeoJSON o ArcGIS JSON transformado)" : "❌ Formato no reconocido o inválido."}
+        </small>
 
-      <VistaPreviaGeojson geojsonString={formData.geometria} tipoEsperado="Polygon" />
+        <VistaPreviaGeojson geojsonString={formData.geometria} tipoEsperado="Polygon" />
 
-      {error && <p className="error">{Array.isArray(error) ? error.join(" / ") : error}</p>}
-      {mensaje && <p className="success">{mensaje}</p>}
+        {error && <p className="mensaje">{Array.isArray(error) ? error.join(" / ") : error}</p>}
+        {mensaje && <p className="success">{mensaje}</p>}
 
-      <button type="submit">{modoEdicion ? "Actualizar" : "Crear"}</button>
-    </form>
+        <button type="submit">{modoEdicion ? "Actualizar" : "Crear"}</button>
+      </form>
+    </div>
   );
 };
 

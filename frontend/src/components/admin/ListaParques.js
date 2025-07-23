@@ -86,11 +86,20 @@ const ListaParques = () => {
                     {perfil?.rol !== "visitante" && (
                       <td>
                         <div className="btn-acciones">
-                          <button className="btn-icono" onClick={() => p.editable && handleEditar(p.id)} disabled={!p.editable}>
+                          <button
+                            className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
+                            onClick={() => p.editable && handleEditar(p.id)}
+                            disabled={!p.editable}
+                            title={p.editable ? "Editar parque" : "Solo puede editar el creador o un admin"}
+                          >
                             <span className="material-symbols-outlined">edit</span>
                           </button>
                           {perfil.rol === "admin" && (
-                            <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
+                            <button
+                              className="btn-icono btn-eliminar"
+                              onClick={() => handleEliminar(p.id)}
+                              title="Eliminar parque"
+                            >
                               <span className="material-symbols-outlined">delete</span>
                             </button>
                           )}

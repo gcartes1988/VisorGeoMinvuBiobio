@@ -1,5 +1,6 @@
 /* formularios.css - estilos generales para todos los formularios del sistema */
 
+
 .formulario-container {
   max-width: 860px;
   margin: 2rem auto;
@@ -25,6 +26,13 @@
   color: #1E1E1E;
 }
 
+
+.formulario-container .react-select__control {
+  border: 1px solid #CCCCCC;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: "Roboto", sans-serif;
+}
 select {
   height: auto;
 }

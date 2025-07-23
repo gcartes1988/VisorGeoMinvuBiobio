@@ -1,4 +1,3 @@
-// src/components/listas/ListaPavimentos.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -79,6 +78,7 @@ const ListaPavimentos = () => {
                             className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
                             onClick={() => p.editable && handleEditar(p.id)}
                             disabled={!p.editable}
+                            title={p.editable ? "Editar pavimento" : "Solo puede editar el creador o un admin"}
                           >
                             <span className="material-symbols-outlined">edit</span>
                           </button>
@@ -86,6 +86,7 @@ const ListaPavimentos = () => {
                             <button
                               className="btn-icono btn-eliminar"
                               onClick={() => handleEliminar(p.id)}
+                              title="Eliminar pavimento"
                             >
                               <span className="material-symbols-outlined">delete</span>
                             </button>

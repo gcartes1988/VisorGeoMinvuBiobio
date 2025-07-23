@@ -90,19 +90,60 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
 
 
-@router.get("/", response_model=List[PavimentoOut])
-def listar_pavimentos(request: Request, db: Session = Depends(get_db)):
+@router.get("/{pavimento_id}", response_model=PavimentoOut)
+def obtener_pavimento(pavimento_id: int, request: Request, db: Session = Depends(get_db)):
     user = request.state.user
     if not user:
         raise HTTPException(status_code=401, detail="❌ No autenticado")
 
+    pavimento = db.query(Pavimento).options(
+        selectinload(Pavimento.comuna),
+        selectinload(Pavimento.estado_avance),
+        selectinload(Pavimento.proyecto)
+    ).filter(Pavimento.id == pavimento_id).first()
+
+    if not pavimento:
+        raise HTTPException(status_code=404, detail="❌ Pavimento no encontrado.")
+
+    tipos = db.execute(
+        text("SELECT id, nombre FROM tipo_pavimento WHERE id IN (SELECT tipo_pavimento_id FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid)"),
+        {"pid": pavimento.id}
+    ).fetchall()
+
+    geojson_geom = mapping(wkb_loads(bytes(pavimento.geometria.data)))
+
+    editable = False
+    if pavimento.proyecto and (
+        user["rol"] == "admin" or pavimento.proyecto.creado_por_id == user["usuario_id"]
+    ):
+        editable = True
+
+    return PavimentoOut(
+        id=pavimento.id,
+        proyecto_id=pavimento.proyecto_id,
+        sector=pavimento.sector,
+        longitud_metros=pavimento.longitud_metros,
+        tipo_calzada_id=pavimento.tipo_calzada_id,
+        geometria=geojson_geom,
+        comuna={"id": pavimento.comuna.id, "nombre": pavimento.comuna.nombre},
+        estado_avance={"id": pavimento.estado_avance.id, "nombre": pavimento.estado_avance.nombre},
+        tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos],
+        editable=editable
+    )
+
+
+
+@router.get("/", response_model=List[PavimentoOut])
+def listar_pavimentos(db: Session = Depends(get_db), request: Request = None):
     pavimentos = db.query(Pavimento).options(
         selectinload(Pavimento.comuna),
         selectinload(Pavimento.estado_avance),
         selectinload(Pavimento.proyecto)
     ).all()
 
+    user = request.state.user if request else None
     resultados = []
+
     for p in pavimentos:
         try:
             tipos = db.execute(
@@ -113,10 +154,11 @@ def listar_pavimentos(request: Request, db: Session = Depends(get_db)):
             geojson_geom = mapping(wkb_loads(bytes(p.geometria.data)))
 
             editable = False
-            if p.proyecto and (
-                user["rol"] == "admin" or p.proyecto.creado_por_id == user["usuario_id"]
-            ):
-                editable = True
+            if user:
+                if user["rol"] == "admin":
+                    editable = True
+                elif p.proyecto and p.proyecto.creado_por_id == user["usuario_id"]:
+                    editable = True
 
             resultados.append({
                 "id": p.id,
@@ -131,39 +173,12 @@ def listar_pavimentos(request: Request, db: Session = Depends(get_db)):
                 "editable": editable
             })
 
-        except Exception:
+        except Exception as e:
+            print(f"❌ Error en pavimento ID {p.id}:", e)
             continue
 
     return resultados
 
-
-@router.get("/{pavimento_id}", response_model=PavimentoOut)
-def obtener_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
-    pavimento = db.query(Pavimento).options(
-        selectinload(Pavimento.comuna),
-        selectinload(Pavimento.estado_avance)
-    ).filter(Pavimento.id == pavimento_id).first()
-
-    if not pavimento:
-        raise HTTPException(status_code=404, detail="❌ Pavimento no encontrado.")
-
-    tipos = db.execute(
-        text("SELECT id, nombre FROM tipo_pavimento WHERE id IN (SELECT tipo_pavimento_id FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid)"),
-        {"pid": pavimento.id}
-    ).fetchall()
-
-    geojson_geom = mapping(wkb_loads(bytes(pavimento.geometria.data)))
-    return PavimentoOut(
-        id=pavimento.id,
-        proyecto_id=pavimento.proyecto_id,
-        sector=pavimento.sector,
-        longitud_metros=pavimento.longitud_metros,
-        tipo_calzada_id=pavimento.tipo_calzada_id,
-        geometria=geojson_geom,
-        comuna={"id": pavimento.comuna.id, "nombre": pavimento.comuna.nombre},
-        estado_avance={"id": pavimento.estado_avance.id, "nombre": pavimento.estado_avance.nombre},
-        tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos]
-    )
 
 
 @router.put("/{pavimento_id}", response_model=dict)

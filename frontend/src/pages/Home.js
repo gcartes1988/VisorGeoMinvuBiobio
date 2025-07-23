@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import Icono from "../components/Icono";
 import { useNavigate } from "react-router-dom";
 import "../css/home.css";
+import "../css/sidebarvisor.css";
 
 function Home() {
   const [categorias, setCategorias] = useState([]);
@@ -12,8 +13,17 @@ function Home() {
   const [geojsonData, setGeojsonData] = useState([]);
   const [mensajeUsuario, setMensajeUsuario] = useState(null);
   const [cargando, setCargando] = useState(false);
-  const [sidebarMinimizada, setSidebarMinimizada] = useState(false);
+  const [sidebarAbierta, setSidebarAbierta] = useState(true);
+  const [esMovil, setEsMovil] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const manejarResize = () => {
+      setEsMovil(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", manejarResize);
+    return () => window.removeEventListener("resize", manejarResize);
+  }, []);
 
   useEffect(() => {
     axios.get("/categorias").then((res) =>
@@ -72,13 +82,26 @@ function Home() {
     }
   };
 
+  const toggleSidebar = () => {
+    setSidebarAbierta(!sidebarAbierta);
+  };
+
   return (
     <div className="visor-container">
+      <button
+        className="toggle-sidebar-global"
+        onClick={toggleSidebar}
+        title={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
+      >
+        <Icono nombre={sidebarAbierta ? "chevron_left" : "chevron_right"} />
+      </button>
+
       <Sidebar
         categorias={categorias}
         comunas={comunas}
         onResultados={handleResultados}
-        onToggleMinimizada={setSidebarMinimizada}
+        mostrarSidebar={sidebarAbierta}
+        minimizada={!sidebarAbierta && !esMovil}
       />
 
       <div className="mapa">
@@ -115,7 +138,7 @@ function Home() {
         <MapaProyectos
           capas={geojsonData}
           limpiarCapas={() => setGeojsonData([])}
-          sidebarMinimizada={sidebarMinimizada}
+          sidebarMinimizada={!sidebarAbierta}
         />
       </div>
     </div>
