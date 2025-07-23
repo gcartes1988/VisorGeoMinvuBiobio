@@ -14,6 +14,8 @@ class Pavimento(Base):
     estado_avance_id = Column(Integer, ForeignKey("estado_avance.id"), nullable=False)
     longitud_metros = Column(Float, nullable=False)
     geometria = Column(Geometry("LINESTRING", srid=4326), nullable=False)
+    
+
 
     # Relaciones
     proyecto = relationship("Proyecto", back_populates="pavimentos")

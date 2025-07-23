@@ -5,42 +5,49 @@ import { useUser } from "../../context/UserContext";
 import Icono from "../Icono";
 import "../../css/listas.css";
 
-const ListaProyectos = () => {
-  const [proyectos, setProyectos] = useState([]);
+const ListaParques = () => {
+  const [parques, setParques] = useState([]);
   const [colapsado, setColapsado] = useState(false);
   const { perfil } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/proyectos/aprobados")
-      .then(res => setProyectos(res.data))
-      .catch(err => console.error("❌ Error al cargar proyectos:", err));
+    api.get("/parques/")
+      .then(res => {
+        console.log("📦 Parques cargados:", res.data);
+        setParques(res.data);
+      })
+      .catch(err => console.error("❌ Error al cargar parques:", err));
   }, []);
 
-  const handleEditar = (id) => navigate(`/admin/editar-proyecto/${id}`);
+  const handleEditar = (id) => navigate(`/admin/editar-parque/${id}`);
 
   const handleEliminar = async (id) => {
-    if (!window.confirm("¿Eliminar este proyecto?")) return;
+    if (!window.confirm("¿Eliminar este parque?")) return;
     try {
-      await api.delete(`/proyectos/${id}`);
-      setProyectos(prev => prev.filter(p => p.id !== id));
+      await api.delete(`/parques/${id}`);
+      setParques(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error("❌ Error al eliminar:", err);
     }
   };
 
   const renderEstado = (estado) => {
-    const icon = estado === "aprobado" ? "check_circle" : estado === "pendiente" ? "schedule" : "cancel";
-    const clase = estado === "aprobado"
-      ? "estado aprobado"
-      : estado === "pendiente"
-      ? "estado pendiente"
-      : "estado rechazado";
+    if (!estado) return (
+      <span className="estado sin-estado">
+        <Icono nombre="help_outline" size={18} />
+        Sin estado
+      </span>
+    );
+
+    const nombre = estado.toLowerCase();
+    const icon = nombre === "aprobado" ? "mood" : nombre === "pendiente" ? "pending" : "cancel";
+    const clase = nombre === "aprobado" ? "estado aprobado" : nombre === "pendiente" ? "estado pendiente" : "estado rechazado";
 
     return (
       <span className={clase}>
         <Icono nombre={icon} size={18} />
-        {estado.charAt(0).toUpperCase() + estado.slice(1)}
+        {estado}
       </span>
     );
   };
@@ -49,9 +56,9 @@ const ListaProyectos = () => {
     <div className="lista">
       <div className="titulo-colapsable" onClick={() => setColapsado(!colapsado)}>
         <h2 className="font-level-2 text-primary">
-          <span className="material-symbols-outlined">folder</span> Gestión de proyectos
+          <span className="material-symbols-outlined">park</span> Parques urbanos
         </h2>
-        <button className="btn-toggle">
+        <button className="btn-toggle" title="Colapsar/Expandir">
           <Icono nombre={colapsado ? "expand_more" : "expand_less"} />
         </button>
       </div>
@@ -61,23 +68,25 @@ const ListaProyectos = () => {
           <table className="tabla-lista">
             <thead>
               <tr>
-                <th><Icono nombre="check_box_outline_blank" /></th>
+                <th></th>
                 <th>Nombre</th>
+                <th>Comuna</th>
                 <th>Estado</th>
                 {perfil?.rol !== "visitante" && <th className="acciones-columna">Acciones</th>}
               </tr>
             </thead>
             <tbody>
-              {proyectos.length > 0 ? (
-                proyectos.map((p) => (
+              {parques.length > 0 ? (
+                parques.map((p) => (
                   <tr key={p.id}>
                     <td><input type="checkbox" /></td>
-                    <td>{p.nombre}</td>
-                    <td>{renderEstado(p.estado_proyecto)}</td>
+                    <td>{p.nombre || "Sin nombre"}</td>
+                    <td>{p.comuna?.nombre || "Sin comuna"}</td>
+                    <td>{renderEstado(p.proyecto?.estado_proyecto)}</td>
                     {perfil?.rol !== "visitante" && (
                       <td>
                         <div className="btn-acciones">
-                          <button className="btn-icono" onClick={() => handleEditar(p.id)}>
+                          <button className="btn-icono" onClick={() => p.editable && handleEditar(p.id)} disabled={!p.editable}>
                             <span className="material-symbols-outlined">edit</span>
                           </button>
                           {perfil.rol === "admin" && (
@@ -91,11 +100,7 @@ const ListaProyectos = () => {
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={perfil?.rol !== "visitante" ? 4 : 3}>
-                    No hay proyectos registrados.
-                  </td>
-                </tr>
+                <tr><td colSpan="5">No hay parques registrados.</td></tr>
               )}
             </tbody>
           </table>
@@ -105,4 +110,4 @@ const ListaProyectos = () => {
   );
 };
 
-export default ListaProyectos;
+export default ListaParques;

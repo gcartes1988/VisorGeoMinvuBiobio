@@ -1,18 +1,20 @@
-// src/components/VistaPreviaGeojson.js
+// src/components/VistaPreviaGeojson.jsx
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import { useEffect, useState } from "react";
 
-export default function VistaPreviaGeojson({ geojsonStr }) {
+export default function VistaPreviaGeojson({ geojsonString, tipoEsperado }) {
   const [geojson, setGeojson] = useState(null);
 
   useEffect(() => {
     try {
-      const obj = JSON.parse(geojsonStr);
-      if (
-        obj.type === "LineString" ||
-        obj.type === "Polygon" ||
-        obj.type === "MultiPolygon"
-      ) {
+      const obj = JSON.parse(geojsonString);
+
+      const esValido =
+        obj &&
+        obj.type &&
+        ["LineString", "Polygon", "MultiPolygon"].includes(obj.type);
+
+      if (esValido && (!tipoEsperado || obj.type === tipoEsperado)) {
         setGeojson({
           type: "Feature",
           geometry: obj,
@@ -24,25 +26,35 @@ export default function VistaPreviaGeojson({ geojsonStr }) {
     } catch {
       setGeojson(null);
     }
-  }, [geojsonStr]);
+  }, [geojsonString, tipoEsperado]);
 
   if (!geojson)
     return (
       <p style={{ color: "red", marginTop: "0.5rem" }}>
-        ❌ Geometría inválida o vacía
+        ❌ Geometría inválida, vacía o no coincide con el tipo esperado.
       </p>
     );
 
-  // Cálculo de centro para centrado del mapa
-  const coords = geojson.geometry?.coordinates;
-  const tipo = geojson.geometry?.type;
-  let center = [-36.82, -73.05];
+  // 🧭 Cálculo de centro
+  const getCentro = (geometry) => {
+    const { type, coordinates } = geometry;
 
-  if (tipo === "LineString") {
-    center = coords[0].slice().reverse(); // [lat, lon]
-  } else if (tipo === "Polygon") {
-    center = coords?.[0]?.[0]?.slice().reverse();
-  }
+    if (type === "LineString") {
+      return coordinates[0]?.slice().reverse() || [-36.82, -73.05];
+    }
+
+    if (type === "Polygon") {
+      return coordinates[0]?.[0]?.slice().reverse() || [-36.82, -73.05];
+    }
+
+    if (type === "MultiPolygon") {
+      return coordinates[0]?.[0]?.[0]?.slice().reverse() || [-36.82, -73.05];
+    }
+
+    return [-36.82, -73.05];
+  };
+
+  const center = getCentro(geojson.geometry);
 
   return (
     <MapContainer

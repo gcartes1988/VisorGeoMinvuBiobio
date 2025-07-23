@@ -1,4 +1,3 @@
-// src/components/admin/GestionProyectos.jsx
 import React, { useEffect, useState } from "react";
 import axios from "../../services/api";
 import { useUser } from "../../context/UserContext";
@@ -14,7 +13,7 @@ const GestionProyectos = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/proyectos/")
+    axios.get("/proyectos/aprobados")
       .then(res => setProyectos(res.data))
       .catch(err => console.error("❌ Error al cargar proyectos:", err));
   }, []);
@@ -35,7 +34,11 @@ const GestionProyectos = () => {
 
   const renderEstado = (estado) => {
     const icon = estado === "aprobado" ? "check_circle" : estado === "pendiente" ? "schedule" : "cancel";
-    const clase = estado === "aprobado" ? "estado aprobado" : estado === "pendiente" ? "estado pendiente" : "estado rechazado";
+    const clase = estado === "aprobado"
+      ? "estado aprobado"
+      : estado === "pendiente"
+      ? "estado pendiente"
+      : "estado rechazado";
 
     return (
       <span className={clase}>
@@ -81,9 +84,11 @@ const GestionProyectos = () => {
                             <button className="btn-icono" onClick={() => handleEditar(p.id)}>
                               <span className="material-symbols-outlined">edit</span>
                             </button>
-                            <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
+                            {perfil.rol === "admin" && (
+                              <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
+                                <span className="material-symbols-outlined">delete</span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       )}
@@ -91,7 +96,9 @@ const GestionProyectos = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={perfil?.rol !== "visitante" ? 4 : 3}>No hay proyectos registrados.</td>
+                    <td colSpan={perfil?.rol !== "visitante" ? 4 : 3}>
+                      No hay proyectos registrados.
+                    </td>
                   </tr>
                 )}
               </tbody>

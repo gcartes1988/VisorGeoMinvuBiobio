@@ -9,7 +9,7 @@ class Parque(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String, nullable=False)
 
-    proyecto_id = Column(Integer, ForeignKey("proyecto.id"), nullable=False, unique=True)
+    proyecto_id = Column(Integer, ForeignKey("proyecto.id"), nullable=False)
     proyecto = relationship("Proyecto", back_populates="parques")
 
     comuna_id = Column(Integer, ForeignKey("comuna.id"), nullable=False)
@@ -22,3 +22,5 @@ class Parque(Base):
     fuente_financiamiento = relationship("FuenteFinanciamiento")
 
     geometria = Column(Geometry(geometry_type="POLYGON", srid=4326))
+
+

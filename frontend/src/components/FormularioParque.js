@@ -1,245 +1,223 @@
-// ✅ src/components/FormularioParque.jsx
 import { useEffect, useState } from "react";
 import Select from "react-select";
 import api from "../services/api";
 import VistaPreviaGeojson from "./VistaPreviaGeojson";
-import { useUser } from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
 import proj4 from "proj4";
 import "../css/formularios.css";
 
 proj4.defs("EPSG:32718", "+proj=utm +zone=18 +south +datum=WGS84 +units=m +no_defs");
 
-const convertirArcGISToGeoJSON = (arcgisJson) => {
+const convertirArcGISToPolygonGeoJSON = (arcgisJson) => {
   const coordsUTM = arcgisJson.rings?.[0];
-  if (!coordsUTM) return null;
+  if (!coordsUTM || !Array.isArray(coordsUTM)) return null;
 
   const coordsLatLon = coordsUTM.map(([x, y]) =>
     proj4("EPSG:32718", "EPSG:4326", [x, y])
   );
 
+  const closed = [...coordsLatLon];
+  if (
+    closed.length > 0 &&
+    (closed[0][0] !== closed[closed.length - 1][0] ||
+      closed[0][1] !== closed[closed.length - 1][1])
+  ) {
+    closed.push(closed[0]);
+  }
+
   return {
     type: "Polygon",
-    coordinates: [
-      coordsLatLon.map(([lon, lat]) => [
-        parseFloat(lon.toFixed(6)),
-        parseFloat(lat.toFixed(6))
-      ])
-    ]
+    coordinates: [closed],
   };
 };
 
-const FormularioParque = ({ modoEdicion = false, parqueId = null, onSuccess }) => {
-  const { perfil } = useUser();
+const FormularioParque = ({ modoEdicion = false, parqueId = null, proyectoIdSeleccionado = null }) => {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    direccion: "",
+    superficie_ha: "",
+    comuna_id: null,
+    fuente_financiamiento_id: null,
+    proyecto_id: null,
+    geometria: JSON.stringify({
+      type: "Polygon",
+      coordinates: [
+        [
+          [-73.051, -36.828],
+          [-73.05, -36.829],
+          [-73.049, -36.8285],
+          [-73.051, -36.828]
+        ]
+      ]
+    }, null, 2),
+  });
 
-  const [nombre, setNombre] = useState("");
-  const [comunaId, setComunaId] = useState(null);
-  const [direccion, setDireccion] = useState("");
-  const [superficie, setSuperficie] = useState("");
-  const [fuenteId, setFuenteId] = useState(null);
-  const [estadoProyecto, setEstadoProyecto] = useState("pendiente");
-  const [geometriaTexto, setGeometriaTexto] = useState("");
   const [geoValido, setGeoValido] = useState(true);
-  const [geoObjeto, setGeoObjeto] = useState(null);
-
   const [comunas, setComunas] = useState([]);
   const [fuentes, setFuentes] = useState([]);
+  const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const navigate = useNavigate();
 
-  const opcionesEstado = [
-    { value: "pendiente", label: "Pendiente" },
-    { value: "aprobado", label: "Aprobado" },
-    { value: "rechazado", label: "Rechazado" }
-  ];
+  // Cargar proyecto_id si se pasa como prop
+  useEffect(() => {
+    if (proyectoIdSeleccionado) {
+      setFormData((prev) => ({ ...prev, proyecto_id: proyectoIdSeleccionado }));
+    }
+  }, [proyectoIdSeleccionado]);
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [resComunas, resFuentes] = await Promise.all([
-          api.get("/comunas"),
-          api.get("/fuentes-financiamiento")
-        ]);
-        setComunas(resComunas.data);
-        setFuentes(resFuentes.data);
+      const [resComunas, resFuentes] = await Promise.all([
+        api.get("/comunas"),
+        api.get("/fuente-financiamiento"),
+      ]);
+      setComunas(resComunas.data);
+      setFuentes(resFuentes.data);
 
-        if (modoEdicion && parqueId) {
-          const res = await api.get(`/parques/${parqueId}`);
-          const data = res.data;
-
-          setNombre(data.nombre);
-          setComunaId(data.comuna_id);
-          setDireccion(data.direccion || "");
-          setSuperficie(data.superficie_ha || "");
-          setFuenteId(data.fuente_financiamiento_id || null);
-          setGeometriaTexto(JSON.stringify(data.geometria, null, 2));
-          setGeoValido(true);
-          setGeoObjeto(data.geometria);
-
-          if (data.proyecto?.estado_proyecto) {
-            setEstadoProyecto(data.proyecto.estado_proyecto);
-          }
-        } else {
-          setGeometriaTexto(`{
-  "type": "Polygon",
-  "coordinates": [
-    [
-      [-73.0508, -36.828],
-      [-73.0495, -36.8285],
-      [-73.0483, -36.8288],
-      [-73.0508, -36.828]
-    ]
-  ]
-}`);
+      if (modoEdicion && parqueId) {
+        const res = await api.get(`/parques`);
+        const parque = res.data.find((p) => p.id === Number(parqueId));
+        if (parque) {
+          setFormData({
+            nombre: parque.nombre,
+            direccion: parque.direccion || "",
+            superficie_ha: parque.superficie_ha || "",
+            comuna_id: parque.comuna_id,
+            fuente_financiamiento_id: parque.fuente_financiamiento_id,
+            proyecto_id: parque.proyecto_id,
+            geometria: JSON.stringify(parque.geometria, null, 2),
+          });
         }
-      } catch (err) {
-        console.error("❌ Error al cargar datos del formulario:", err);
       }
     };
+
     fetchData();
   }, [modoEdicion, parqueId]);
 
-  const handleGeoChange = (e) => {
-    const valor = e.target.value;
-    setGeometriaTexto(valor);
-
-    try {
-      const parsed = JSON.parse(valor);
-
-      if (parsed.rings && parsed.spatialReference?.wkid === 32718) {
-        const geojson = convertirArcGISToGeoJSON(parsed);
-        setGeoObjeto(geojson);
-        setGeoValido(true);
-      } else if (parsed.type === "Polygon" && parsed.coordinates) {
-        setGeoObjeto(parsed);
-        setGeoValido(true);
-      } else {
+  const handleChange = (field, value) => {
+    if (field === "geometria") {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed.rings && parsed.spatialReference?.wkid === 32718) {
+          const polygon = convertirArcGISToPolygonGeoJSON(parsed);
+          if (polygon) {
+            setFormData((prev) => ({ ...prev, geometria: JSON.stringify(polygon, null, 2) }));
+            setGeoValido(true);
+          } else {
+            setFormData((prev) => ({ ...prev, geometria: value }));
+            setGeoValido(false);
+          }
+        } else if (parsed.type === "Polygon" && parsed.coordinates) {
+          setFormData((prev) => ({ ...prev, geometria: value }));
+          setGeoValido(true);
+        } else {
+          setFormData((prev) => ({ ...prev, geometria: value }));
+          setGeoValido(false);
+        }
+      } catch {
+        setFormData((prev) => ({ ...prev, geometria: value }));
         setGeoValido(false);
-        setGeoObjeto(null);
       }
-    } catch (err) {
-      setGeoValido(false);
-      setGeoObjeto(null);
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setMensaje("");
 
-    if (!perfil?.id) {
-      setMensaje("❌ No se pudo identificar al usuario.");
+    let geoObjeto;
+    try {
+      geoObjeto = JSON.parse(formData.geometria);
+    } catch (e) {
+      setError("❌ Geometría inválida");
       return;
     }
 
-    if (!geoValido || !geoObjeto) {
-      setMensaje("❌ Geometría inválida o vacía.");
+    console.log("🧾 Proyecto ID actual:", formData.proyecto_id);  // <- console log agregado
+
+    if (!formData.proyecto_id) {
+      setError("❌ No se ha asociado un proyecto válido.");
       return;
     }
 
-    const body = {
-      nombre,
-      comuna_id: comunaId,
-      direccion,
-      superficie_ha: parseFloat(superficie) || null,
-      fuente_financiamiento_id: fuenteId || null,
-      geometria: geoObjeto
+    const payload = {
+      ...formData,
+      superficie_ha: parseFloat(formData.superficie_ha) || null,
+      geometria: geoObjeto,
     };
 
-    if (modoEdicion) {
-      body.estado_proyecto = estadoProyecto;
-      try {
-        const res = await api.put(`/parques/${parqueId}`, body);
-        setMensaje(res.data?.mensaje || "✅ Parque actualizado.");
-        if (onSuccess) setTimeout(() => onSuccess(), 1000);
-      } catch (err) {
-        console.error("❌ Error al actualizar parque:", err);
-        setMensaje("❌ Error al actualizar parque.");
+    try {
+      if (modoEdicion) {
+        const res = await api.put(`/parques/${parqueId}`, payload);
+        setMensaje(res.data.mensaje || "✅ Actualizado correctamente");
+      } else {
+        await api.post("/parques", payload);
+        setMensaje("✅ Parque creado correctamente");
       }
-    } else {
-      body.descripcion = "Proyecto tipo Parque";
-      body.creado_por_id = perfil.id;
-      try {
-        const res = await api.post("/parques/crear-completo", body);
-        setMensaje(res.data?.mensaje || "✅ Parque creado.");
-        if (onSuccess) setTimeout(() => onSuccess(), 1000);
-      } catch (err) {
-        console.error("❌ Error al crear parque:", err);
-        setMensaje("❌ Error al crear parque.");
-      }
+
+      setTimeout(() => navigate("/admin/parques"), 1000);
+    } catch (err) {
+      const msg = err.response?.data?.detail || "❌ Error al guardar el parque";
+      setError(msg);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="formulario-container">
-      <h4>{modoEdicion ? "Editar Parque" : "Crear Parque"}</h4>
+    <form className="formulario" onSubmit={handleSubmit}>
+      <h2>{modoEdicion ? "Editar Parque" : "Crear Parque"}</h2>
 
-      <label>Nombre*</label>
-      <input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-
-      <label>Comuna*</label>
-      <Select
-        options={comunas.map((c) => ({ value: c.id, label: c.nombre }))}
-        value={comunas.find((c) => c.id === comunaId) && { value: comunaId, label: comunas.find((c) => c.id === comunaId)?.nombre }}
-        onChange={(op) => setComunaId(op?.value || null)}
-        placeholder="Seleccionar comuna"
-        isClearable
-      />
+      <label>Nombre</label>
+      <input type="text" value={formData.nombre} onChange={(e) => handleChange("nombre", e.target.value)} required />
 
       <label>Dirección</label>
-      <input value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+      <input type="text" value={formData.direccion} onChange={(e) => handleChange("direccion", e.target.value)} />
 
       <label>Superficie (ha)</label>
-      <input
-        type="number"
-        step="0.01"
-        value={superficie}
-        onChange={(e) => setSuperficie(e.target.value)}
+      <input type="number" step="0.01" value={formData.superficie_ha} onChange={(e) => handleChange("superficie_ha", e.target.value)} />
+
+      <label>Comuna</label>
+      <Select
+        options={comunas.map((c) => ({ value: c.id, label: c.nombre }))}
+        value={comunas.find((c) => c.id === formData.comuna_id) && {
+          value: formData.comuna_id,
+          label: comunas.find((c) => c.id === formData.comuna_id)?.nombre,
+        }}
+        onChange={(opt) => handleChange("comuna_id", opt.value)}
       />
 
       <label>Fuente de Financiamiento</label>
       <Select
         options={fuentes.map((f) => ({ value: f.id, label: f.nombre }))}
-        value={fuentes.find((f) => f.id === fuenteId) && { value: fuenteId, label: fuentes.find((f) => f.id === fuenteId)?.nombre }}
-        onChange={(op) => setFuenteId(op?.value || null)}
-        placeholder="Seleccionar fuente"
+        value={fuentes.find((f) => f.id === formData.fuente_financiamiento_id) && {
+          value: formData.fuente_financiamiento_id,
+          label: fuentes.find((f) => f.id === formData.fuente_financiamiento_id)?.nombre,
+        }}
+        onChange={(opt) => handleChange("fuente_financiamiento_id", opt?.value || null)}
         isClearable
       />
 
-      {modoEdicion && (
-        <>
-          <label>Estado del Proyecto</label>
-          <Select
-            options={opcionesEstado}
-            value={opcionesEstado.find(op => op.value === estadoProyecto)}
-            onChange={(op) => setEstadoProyecto(op?.value || "pendiente")}
-          />
-        </>
-      )}
-
-      <label>Geometría (GeoJSON o ArcGIS JSON):</label>
+      <label>Geometría (GeoJSON o ArcGIS JSON)</label>
       <textarea
-        value={geometriaTexto}
-        onChange={handleGeoChange}
-        rows={8}
-        className={geoValido ? "textarea-valid" : "textarea-invalid"}
+        rows={6}
+        value={formData.geometria}
+        onChange={(e) => handleChange("geometria", e.target.value)}
+        required
+        style={{ border: `2px solid ${geoValido ? "green" : "red"}`, width: "100%", fontFamily: "monospace", padding: "8px" }}
       />
-
-      <small style={{ color: geoValido ? "green" : "red" }}>
-        {geoValido
-          ? "✅ Geometría válida (GeoJSON o ArcGIS JSON transformado)"
-          : "❌ Geometría inválida o vacía"}
+      <small style={{ color: geoValido ? "#666" : "red" }}>
+        {geoValido ? "✅ Geometría válida (GeoJSON o ArcGIS JSON transformado)" : "❌ Formato no reconocido o inválido."}
       </small>
 
-      <VistaPreviaGeojson geojsonStr={geometriaTexto} />
+      <VistaPreviaGeojson geojsonString={formData.geometria} tipoEsperado="Polygon" />
 
-      <button type="submit" className="btn btn-primary">
-        {modoEdicion ? "Actualizar" : "Crear"}
-      </button>
+      {error && <p className="error">{Array.isArray(error) ? error.join(" / ") : error}</p>}
+      {mensaje && <p className="success">{mensaje}</p>}
 
-      {mensaje && (
-        <p className="mensaje-error" style={{ marginTop: "1rem" }}>
-          {mensaje}
-        </p>
-      )}
+      <button type="submit">{modoEdicion ? "Actualizar" : "Crear"}</button>
     </form>
   );
 };

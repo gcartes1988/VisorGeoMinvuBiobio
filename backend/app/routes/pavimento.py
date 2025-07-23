@@ -1,5 +1,4 @@
 import json
-import traceback
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -15,17 +14,13 @@ from app.models.proyecto import Proyecto
 from app.models.log_cambios import LogCambios
 from app.schemas.pavimento import PavimentoCreate, PavimentoUpdate, PavimentoOut
 
-
 router = APIRouter(prefix="/pavimentos", tags=["Pavimentos"])
 
 @router.post("/", response_model=PavimentoOut)
 async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
     try:
         user = request.state.user
-
         body = await request.json()
-        print("📨 BODY RECIBIDO:", json.dumps(body, indent=2, ensure_ascii=False))
-
         payload = PavimentoCreate(**body)
         geojson = json.loads(payload.geometria) if isinstance(payload.geometria, str) else payload.geometria
 
@@ -48,14 +43,12 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(nuevo)
 
-        # Forzar carga de relaciones si es necesario
         try:
             _ = nuevo.comuna.id
             _ = nuevo.estado_avance.id
         except:
             db.refresh(nuevo, attribute_names=["comuna", "estado_avance"])
 
-        # Insertar tipos de pavimento
         for tipo_id in payload.tipos_pavimento:
             db.execute(
                 text("INSERT INTO pavimento_tipo_pavimento (pavimento_id, tipo_pavimento_id) VALUES (:pid, :tid)"),
@@ -69,7 +62,6 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
 
         geojson_geom = mapping(shape(geojson))
 
-        # Verificar si el usuario puede editar
         editable = False
         if user and user["rol"] == "admin":
             editable = True
@@ -95,8 +87,6 @@ async def crear_pavimento(request: Request, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         db.rollback()
-        print("💥 ERROR INTERNO EN CREACIÓN DE PAVIMENTO:")
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
 
 
@@ -175,6 +165,7 @@ def obtener_pavimento(pavimento_id: int, db: Session = Depends(get_db)):
         tipos_pavimento=[{"id": t.id, "nombre": t.nombre} for t in tipos]
     )
 
+
 @router.put("/{pavimento_id}", response_model=dict)
 def actualizar_pavimento(
     pavimento_id: int,
@@ -194,14 +185,12 @@ def actualizar_pavimento(
     if not proyecto:
         raise HTTPException(status_code=404, detail="❌ Proyecto asociado no encontrado")
 
-    # 🔐 Validación de permisos
     if user["rol"] != "admin" and proyecto.creado_por_id != user["usuario_id"]:
         raise HTTPException(status_code=403, detail="❌ No tienes permisos para editar este pavimento.")
 
     try:
         cambios = []
 
-        # Geometría
         if payload.geometria:
             nueva_geom = json.loads(payload.geometria) if isinstance(payload.geometria, str) else payload.geometria
             if not nueva_geom.get("type") or not nueva_geom.get("coordinates"):
@@ -218,7 +207,6 @@ def actualizar_pavimento(
                 ))
                 pavimento.geometria = nueva_geom_shape
 
-        # Otros campos
         for attr, value in payload.dict(exclude_unset=True).items():
             if attr in ["geometria", "tipos_pavimento"]:
                 continue
@@ -234,7 +222,6 @@ def actualizar_pavimento(
                 ))
                 setattr(pavimento, attr, value)
 
-        # Tabla intermedia
         db.execute(
             text("DELETE FROM pavimento_tipo_pavimento WHERE pavimento_id = :pid"),
             {"pid": pavimento_id}
@@ -257,10 +244,9 @@ def actualizar_pavimento(
         return {"mensaje": "✅ Pavimento actualizado correctamente"}
 
     except Exception as e:
-        print("💥 ERROR INTERNO AL EDITAR PAVIMENTO:")
-        traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"❌ Error interno: {str(e)}")
+
 
 @router.delete("/{pavimento_id}", response_model=dict)
 def eliminar_pavimento(pavimento_id: int, request: Request, db: Session = Depends(get_db)):
@@ -288,5 +274,3 @@ def eliminar_pavimento(pavimento_id: int, request: Request, db: Session = Depend
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"❌ Error al eliminar pavimento: {str(e)}")
-
-

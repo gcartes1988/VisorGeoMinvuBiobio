@@ -241,7 +241,7 @@ const FormularioPavimento = ({ proyectoId, modoEdicion = false, pavimentoId = nu
             : "❌ Formato no reconocido o inválido."}
         </small>
 
-        <VistaPreviaGeojson geojsonStr={formData.geometria} />
+        <VistaPreviaGeojson geojsonString={formData.geometria} tipoEsperado="LineString" />
 
         <button type="submit" className="btn btn-primary btn-default-size">
           {modoEdicion ? "Actualizar" : "Guardar"} Pavimento

@@ -6,6 +6,22 @@ from app.utils.firebase_auth import verify_token
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+
+        # 🟢 Rutas públicas del visor
+        rutas_publicas = [
+            "/api/proyectos/publicos",
+            "/api/parques/publicos",
+            "/api/ciclovias/publicos",
+            "/api/comunas",
+            "/api/categorias",
+            "/api/estado-avance",
+        ]
+
+        if any(path.startswith(ruta) for ruta in rutas_publicas):
+            return await call_next(request)
+
+        # 🔒 Para panel admin u otras rutas privadas
         auth_header = request.headers.get("Authorization")
 
         if auth_header and auth_header.startswith("Bearer "):
@@ -14,9 +30,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 decoded_token = verify_token(token)
                 firebase_uid = decoded_token.get("uid")
 
-                db = SessionLocal()
-                user = db.query(Usuario).filter(Usuario.firebase_uid == firebase_uid).first()
-                db.close()
+                with SessionLocal() as db:
+                    user = db.query(Usuario).filter(Usuario.firebase_uid == firebase_uid).first()
 
                 if user:
                     request.state.user = {
@@ -25,7 +40,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         "uid": user.firebase_uid,
                         "nombre_usuario": user.nombre_usuario
                     }
-
+                else:
+                    request.state.user = None
             except Exception as e:
                 print("⚠️ Middleware: error verificando token:", str(e))
                 request.state.user = None

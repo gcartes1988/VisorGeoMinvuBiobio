@@ -25,7 +25,7 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
 
   useEffect(() => {
     api.get('/categorias').then(res => setCategorias(res.data));
-    api.get('/proyectos').then(res => setProyectos(res.data));
+    api.get('/proyectos/aprobados').then(res => setProyectos(res.data));
     api.get('/me').then(res => setUsuario(res.data));
   }, []);
 
@@ -81,7 +81,7 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
         }
       }
 
-      const resProyectos = await api.get('/proyectos');
+      const resProyectos = await api.get('/proyectos/aprobados');
       setProyectos(resProyectos.data);
     } catch {
       setMensaje("❌ Error al guardar el proyecto");
@@ -89,9 +89,7 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
   };
 
   const proyectoSeleccionado = proyectos.find(p => p.id === parseInt(proyectoExistente));
-  const categoriaIdSeleccionada =
-  proyectoSeleccionado?.categoria?.id || proyectoSeleccionado?.categoria_id;
-
+  const categoriaIdSeleccionada = proyectoSeleccionado?.categoria?.id || proyectoSeleccionado?.categoria_id;
 
   if (!usuario || categorias.length === 0) {
     return (
@@ -99,126 +97,119 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
         <div className="spinner"></div>
         <p className="loading-text">Cargando datos del proyecto...</p>
       </div>
-    );  }
+    );
+  }
 
   return (
-      <div className="formulario-container">
+    <div className="formulario-container">
+      {/* SECCIÓN 1: Selección de proyecto existente */}
+      {!modoEdicion && (
+        <div>
+          <h3>Seleccionar o Crear Proyecto</h3>
+          <label className="font-level-7">Proyecto:</label>
+          <Select
+            options={[
+              { label: 'Crear nuevo proyecto', value: '' },
+              {
+                label: 'Proyectos existentes',
+                options: proyectos.map(p => ({
+                  label: p.nombre,
+                  value: String(p.id)
+                }))
+              }
+            ]}
+            value={proyectoExistente
+              ? { label: proyectoSeleccionado?.nombre || '', value: proyectoExistente }
+              : { label: 'Crear nuevo proyecto', value: '' }}
+            onChange={(option) => setProyectoExistente(option.value)}
+          />
+        </div>
+      )}
 
+      {/* SECCIÓN 2: Formulario principal */}
+      {(!proyectoExistente || modoEdicion) && (
+        <form onSubmit={handleSubmit} className="bg-white p-4 rounded-xl border border-gray-b mb-6">
+          <label className="font-level-7">Nombre:</label>
+          <input className="input-text" type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
 
-        {/* SECCIÓN 1: Selección */}
-        {!modoEdicion && (
-          <div>
-            <h3>
-              Seleccionar o Crear Proyecto
-            </h3>
-            <label className="font-level-7">Proyecto:</label>
-            <Select
-              options={[
-                { label: 'Crear nuevo proyecto', value: '' },
-                {
-                  label: 'Proyectos existentes',
-                  options: proyectos.map(p => ({
-                    label: p.nombre,
-                    value: String(p.id)
-                  }))
-                }
-              ]}
-              value={proyectoExistente
-                ? { label: proyectoSeleccionado?.nombre || '', value: proyectoExistente }
-                : { label: 'Crear nuevo proyecto', value: '' }}
-              onChange={(option) => setProyectoExistente(option.value)}
-            />
+          <label className="font-level-7">Descripción:</label>
+          <textarea className="input-text" name="descripcion" value={formData.descripcion} onChange={handleInputChange} required />
+
+          <label className="font-level-7">Categoría:</label>
+          <Select
+            options={categorias.map(c => ({ value: c.id, label: c.nombre }))}
+            value={categorias.find(c => c.id === parseInt(formData.categoria_id)) ?
+              { value: formData.categoria_id, label: categorias.find(c => c.id === parseInt(formData.categoria_id)).nombre }
+              : null}
+            onChange={opt => handleSelectChange('categoria_id', opt)}
+            placeholder="Seleccionar categoría"
+          />
+
+          {usuario?.rol === 'admin' && (
+            <>
+              <label className="font-level-7">Estado del Proyecto:</label>
+              <Select
+                options={[
+                  { value: 'pendiente', label: 'Pendiente' },
+                  { value: 'aprobado', label: 'Aprobado' },
+                  { value: 'rechazado', label: 'Rechazado' }
+                ]}
+                value={{
+                  value: formData.estado_proyecto,
+                  label: formData.estado_proyecto.charAt(0).toUpperCase() + formData.estado_proyecto.slice(1)
+                }}
+                onChange={opt => handleSelectChange('estado_proyecto', opt)}
+              />
+            </>
+          )}
+
+          <button type="submit" className="btn btn-primary btn-default-size mt-4">
+            {modoEdicion ? 'Actualizar Proyecto' : 'Guardar Proyecto'}
+          </button>
+        </form>
+      )}
+
+      {/* SECCIÓN 3: Formulario hijo */}
+      {proyectoExistente && !modoEdicion && (
+        <div><br />
+          <div className="text-gray-b mb-3">
+            <p><strong>Nombre:</strong> {proyectoSeleccionado?.nombre}</p>
+            <p><strong>Categoría:</strong> {categorias.find(c => c.id === categoriaIdSeleccionada)?.nombre}</p>
+            <p><strong>Estado:</strong> {proyectoSeleccionado?.estado_proyecto}</p>
           </div>
-        )}
 
-        {/* SECCIÓN 2: Formulario principal */}
-        {(!proyectoExistente || modoEdicion) && (
-          <form onSubmit={handleSubmit} className="bg-white p-4 rounded-xl border border-gray-b mb-6">
-  
+          {(() => {
+            const formularios = {
+              1: FormularioPavimento,
+              2: FormularioCiclovia,
+              3: FormularioParque,
+            };
 
-            <label className="font-level-7">Nombre:</label>
-            <input className="input-text" type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required />
+            const FormularioEspecifico = formularios[categoriaIdSeleccionada];
 
-            <label className="font-level-7">Descripción:</label>
-            <textarea className="input-text" name="descripcion" value={formData.descripcion} onChange={handleInputChange} required />
+            return FormularioEspecifico ? (
+              <FormularioParque proyectoIdSeleccionado={proyectoSeleccionado.id} />
 
-            <label className="font-level-7">Categoría:</label>
-            <Select
-              options={categorias.map(c => ({ value: c.id, label: c.nombre }))}
-              value={categorias.find(c => c.id === parseInt(formData.categoria_id)) ?
-                { value: formData.categoria_id, label: categorias.find(c => c.id === parseInt(formData.categoria_id)).nombre }
-                : null}
-              onChange={opt => handleSelectChange('categoria_id', opt)}
-              placeholder="Seleccionar categoría"
-            />
+            ) : (
+              <p className="text-orange">⚠️ Esta categoría aún no tiene un formulario implementado.</p>
+            );
+          })()}
+        </div>
+      )}
 
-            {usuario?.rol === 'admin' && (
-              <>
-                <label className="font-level-7">Estado del Proyecto:</label>
-                <Select
-                  options={[
-                    { value: 'pendiente', label: 'Pendiente' },
-                    { value: 'aprobado', label: 'Aprobado' },
-                    { value: 'rechazado', label: 'Rechazado' }
-                  ]}
-                  value={{
-                    value: formData.estado_proyecto,
-                    label: formData.estado_proyecto.charAt(0).toUpperCase() + formData.estado_proyecto.slice(1)
-                  }}
-                  onChange={opt => handleSelectChange('estado_proyecto', opt)}
-                />
-              </>
-            )}
-
-            <button type="submit" className="btn btn-primary btn-default-size mt-4">
-              {modoEdicion ? 'Actualizar Proyecto' : 'Guardar Proyecto'}
-            </button>
-          </form>
-        )}
-
-        {/* SECCIÓN 3: Formulario hijo */}
-        {proyectoExistente && !modoEdicion && (
-          <div><br></br>
-            <div className="text-gray-b mb-3">
-              <p><strong>Nombre:</strong> {proyectoSeleccionado?.nombre}</p>
-              <p><strong>Categoría:</strong> {categorias.find(c => c.id === categoriaIdSeleccionada)?.nombre}</p>
-              <p><strong>Estado:</strong> {proyectoSeleccionado?.estado_proyecto}</p>
-            </div>
-
-            {(() => {
-  const formularios = {
-    1: FormularioPavimento,
-    2: FormularioCiclovia,
-    3: FormularioParque,
-  };
-
-  const FormularioEspecifico = formularios[categoriaIdSeleccionada];
-
-  return FormularioEspecifico ? (
-    <FormularioEspecifico proyectoId={proyectoSeleccionado.id} />
-  ) : (
-    <p className="text-orange">⚠️ Esta categoría aún no tiene un formulario implementado.</p>
-  );
-})()}
-
-          </div>
-        )}
-
-        {/* MENSAJE */}
-        {mensaje && (
-          <p
-            className={`mt-4 p-3 rounded text-sm ${
-              mensaje.startsWith("✅")
-                ? "bg-green text-white"
-                : mensaje.startsWith("❌")
-                ? "bg-secondary text-white"
-                : "bg-orange-light text-white"
-            }`}
-          >
-            {mensaje}
-          </p>
-        )}
-      </div>
+      {/* MENSAJE */}
+      {mensaje && (
+        <p className={`mt-4 p-3 rounded text-sm ${
+          mensaje.startsWith("✅")
+            ? "bg-green text-white"
+            : mensaje.startsWith("❌")
+              ? "bg-secondary text-white"
+              : "bg-orange-light text-white"
+        }`}>
+          {mensaje}
+        </p>
+      )}
+    </div>
   );
 };
 

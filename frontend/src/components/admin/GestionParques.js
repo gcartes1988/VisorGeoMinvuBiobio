@@ -1,4 +1,3 @@
-// src/components/admin/GestionParques.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -15,13 +14,14 @@ const GestionParques = () => {
 
   useEffect(() => {
     api.get("/parques/")
-      .then(res => setParques(res.data))
+      .then(res => {
+        console.log("📦 Parques cargados:", res.data);
+        setParques(res.data);
+      })
       .catch(err => console.error("❌ Error al cargar parques:", err));
   }, []);
 
-  const handleEditar = (id) => {
-    navigate(`/admin/editar-parque/${id}`);
-  };
+  const handleEditar = (id) => navigate(`/admin/editar-parque/${id}`);
 
   const handleEliminar = async (id) => {
     if (!window.confirm("¿Eliminar este parque?")) return;
@@ -34,14 +34,21 @@ const GestionParques = () => {
   };
 
   const renderEstado = (estado) => {
-    const nombre = estado?.toLowerCase();
-    const icon = nombre === "terminada" ? "check_circle" : nombre === "en ejecución" ? "schedule" : "pending";
-    const clase = nombre === "terminada" ? "estado aprobado" : nombre === "en ejecución" ? "estado pendiente" : "estado rechazado";
+    if (!estado) return (
+      <span className="estado sin-estado">
+        <Icono nombre="help_outline" size={18} />
+        Sin estado
+      </span>
+    );
+
+    const nombre = estado.toLowerCase();
+    const icon = nombre === "aprobado" ? "mood" : nombre === "pendiente" ? "pending" : "cancel";
+    const clase = nombre === "aprobado" ? "estado aprobado" : nombre === "pendiente" ? "estado pendiente" : "estado rechazado";
 
     return (
       <span className={clase}>
         <Icono nombre={icon} size={18} />
-        {estado || "Sin estado"}
+        {estado}
       </span>
     );
   };
@@ -80,26 +87,26 @@ const GestionParques = () => {
                       <td>{renderEstado(p.proyecto?.estado_proyecto)}</td>
                       {perfil?.rol !== "visitante" && (
                         <td>
-<div className="btn-acciones">
-    <button
-      className="btn-icono"
-      onClick={() => p.editable && handleEditar(p.id)}
-      disabled={!p.editable}
-      title={p.editable ? "Editar parque" : "No tienes permisos para editar"}
-    >
-      <span className="material-symbols-outlined">edit</span>
-    </button>
+                          <div className="btn-acciones">
+                            <button
+                              className="btn-icono"
+                              onClick={() => p.editable && handleEditar(p.id)}
+                              disabled={!p.editable}
+                              title={p.editable ? "Editar parque" : "No tienes permisos para editar"}
+                            >
+                              <span className="material-symbols-outlined">edit</span>
+                            </button>
 
-    {perfil.rol === "admin" && (
-      <button
-        className="btn-icono btn-eliminar"
-        onClick={() => handleEliminar(p.id)}
-        title="Eliminar parque"
-      >
-        <span className="material-symbols-outlined">delete</span>
-      </button>
-    )}
-  </div>
+                            {perfil.rol === "admin" && (
+                              <button
+                                className="btn-icono btn-eliminar"
+                                onClick={() => handleEliminar(p.id)}
+                                title="Eliminar parque"
+                              >
+                                <span className="material-symbols-outlined">delete</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
