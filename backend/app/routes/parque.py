@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session, selectinload
 from geoalchemy2.shape import from_shape
-from shapely.geometry import shape
+from shapely.geometry import shape, mapping
 
 from app.database import get_db
 from app.models.parque import Parque
