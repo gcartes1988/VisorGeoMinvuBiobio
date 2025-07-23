@@ -1,3 +1,4 @@
+/* === Sidebar base === */
 .sidebar {
   position: fixed;
   top: 0;
@@ -7,15 +8,45 @@
   background-color: var(--white);
   border-right: 1px solid var(--accent);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-  transition: width 0.3s ease, transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
   z-index: 1000;
   overflow-y: hidden;
 }
 
-/* Contenido colapsable */
+/* Mostrar solo en móvil (oculto por defecto) */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mostrar {
+    transform: translateX(0%);
+  }
+}
+
+/* === Botón toggle flotante === */
+.toggle-sidebar-global {
+  position: fixed;
+  top: 16px;
+  left: 12px;
+  z-index: 3000;
+  background: var(--accent);
+  color: var(--white);
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* === Logo === */
 .sidebar-logo {
   text-align: center;
-  padding: 2rem 1rem 0rem 1rem;
+  padding: 4rem 1rem 0rem 1rem;
   background-color: var(--primary);
 }
 
@@ -26,6 +57,7 @@
   display: block;
 }
 
+/* === Buscador === */
 .buscador-wrapper {
   background-color: var(--primary);
   padding: 1rem 1rem 2rem 1rem;
@@ -55,6 +87,7 @@
   pointer-events: none;
 }
 
+/* === Contenido === */
 .sidebar-contenido {
   display: flex;
   flex-direction: column;
@@ -62,6 +95,7 @@
   padding: 1.5rem 1rem;
 }
 
+/* === Botones === */
 .btn-buscar,
 .btn-limpiar {
   padding: 10px 14px;
@@ -96,6 +130,7 @@
   color: var(--black);
 }
 
+/* === Mensaje === */
 .mensaje-info {
   display: flex;
   align-items: center;
@@ -115,57 +150,15 @@
   font-style: italic;
 }
 
-/* Botón flotante de toggle */
-.toggle-sidebar-global {
-  position: fixed;
-  top: 16px;
-  left: 12px;
-  z-index: 3000;
-  background: var(--accent);
-  color: var(--white);
-  border: none;
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* MÓVIL: sidebar entra con translate */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.mostrar {
-    transform: translateX(0%);
-  }
-}
-
-/* ESCRITORIO: sidebar colapsa con width */
-@media (min-width: 769px) {
-  .sidebar.mostrar {
-    transform: none;
-  }
-
-  .sidebar.minimizada {
-    width: 60px;
-    padding: 10px 8px;
-  }
-
-  .sidebar.minimizada .sidebar-logo,
-  .sidebar.minimizada .buscador-wrapper,
-  .sidebar.minimizada .sidebar-contenido {
-    display: none;
-  }
-}
-
-/* Z-index para react-select */
+/* === Z-index react-select === */
 .Select__menu,
 .css-1nmdiq5-menu,
 .css-26l3qy-menu {
   z-index: 9999 !important;
+}
+
+@media (min-width: 769px) {
+  .toggle-sidebar-global {
+    display: none;
+  }
 }

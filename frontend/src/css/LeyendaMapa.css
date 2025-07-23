@@ -1,4 +1,8 @@
 .leyenda-mapa {
+  position: absolute;
+  bottom: 30px;
+  margin-left: 280px;
+  transition: left 0.3s ease;
   background: var(--white);
   border: 1px solid var(--gray-b);
   border-radius: 10px;
@@ -6,7 +10,6 @@
   font-family: var(--font-base);
   font-size: 0.9rem;
   z-index: 1000;
-  transition: all 0.3s ease;
 }
 
 .sombra-suave {
@@ -45,28 +48,16 @@
   height: 16px;
   border-radius: 3px;
   border: 1px solid #999;
-  display: inline-block;
-}
-
-.modo-sidebar {
-  position: absolute;
-  bottom: 30px;
-  left: 300px;
-}
-
-.modo-movil {
-  position: absolute;
-  bottom: 30px;
-  left: 80px;
-}
-
-@media (max-width: 768px) {
-  .modo-sidebar {
-    left: 20px !important;
-  }
 }
 
 .leyenda-colapsada {
   padding: 10px 12px;
   border-radius: 20px;
+}
+
+/* Dispositivos móviles y tablets (hasta 1024px) */
+@media (max-width: 769px) {
+  .leyenda-mapa {
+    margin-left: 0; /* o ajusta según lo que necesites en móviles */
+  }
 }

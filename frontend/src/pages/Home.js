@@ -13,17 +13,8 @@ function Home() {
   const [geojsonData, setGeojsonData] = useState([]);
   const [mensajeUsuario, setMensajeUsuario] = useState(null);
   const [cargando, setCargando] = useState(false);
-  const [sidebarAbierta, setSidebarAbierta] = useState(true);
-  const [esMovil, setEsMovil] = useState(window.innerWidth <= 768);
+  const [mostrarSidebar, setMostrarSidebar] = useState(window.innerWidth > 768);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const manejarResize = () => {
-      setEsMovil(window.innerWidth <= 768);
-    };
-    window.addEventListener("resize", manejarResize);
-    return () => window.removeEventListener("resize", manejarResize);
-  }, []);
 
   useEffect(() => {
     axios.get("/categorias").then((res) =>
@@ -39,6 +30,21 @@ function Home() {
         label: com.nombre,
       })))
     );
+  }, []);
+
+  useEffect(() => {
+    const manejarResize = () => {
+      if (window.innerWidth > 768) {
+        setMostrarSidebar(true);
+      } else {
+        setMostrarSidebar(false);
+      }
+    };
+
+    window.addEventListener("resize", manejarResize);
+    manejarResize(); // inicial
+
+    return () => window.removeEventListener("resize", manejarResize);
   }, []);
 
   const handleResultados = async (geojson) => {
@@ -83,7 +89,7 @@ function Home() {
   };
 
   const toggleSidebar = () => {
-    setSidebarAbierta(!sidebarAbierta);
+    setMostrarSidebar((prev) => !prev);
   };
 
   return (
@@ -91,17 +97,16 @@ function Home() {
       <button
         className="toggle-sidebar-global"
         onClick={toggleSidebar}
-        title={sidebarAbierta ? "Ocultar menú" : "Mostrar menú"}
+        title={mostrarSidebar ? "Ocultar menú" : "Mostrar menú"}
       >
-        <Icono nombre={sidebarAbierta ? "chevron_left" : "chevron_right"} />
+        <Icono nombre={mostrarSidebar ? "chevron_left" : "chevron_right"} />
       </button>
 
       <Sidebar
         categorias={categorias}
         comunas={comunas}
         onResultados={handleResultados}
-        mostrarSidebar={sidebarAbierta}
-        minimizada={!sidebarAbierta && !esMovil}
+        mostrarSidebar={mostrarSidebar}
       />
 
       <div className="mapa">
@@ -138,7 +143,6 @@ function Home() {
         <MapaProyectos
           capas={geojsonData}
           limpiarCapas={() => setGeojsonData([])}
-          sidebarMinimizada={!sidebarAbierta}
         />
       </div>
     </div>

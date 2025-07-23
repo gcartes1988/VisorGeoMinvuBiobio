@@ -7,19 +7,23 @@ const leyenda = [
   { tipo: "Parque", color: "#FFA11B", icono: "park" },
 ];
 
-export default function LeyendaMapa({ sidebarMinimizada }) {
+export default function LeyendaMapa({ sidebarVisible }) {
   const [abierto, setAbierto] = useState(true);
 
-  const clases = `leyenda-mapa sombra-suave ${abierto ? "" : "leyenda-colapsada"} ${sidebarMinimizada ? "modo-movil" : "modo-sidebar"}`;
-
   return (
-    <div className={clases}>
-      <button className="btn-toggle " onClick={() => setAbierto(!abierto)}>
-        <span className="material-symbols-outlined text-gray-b ">
+    <div
+      className={`leyenda-mapa sombra-suave ${abierto ? "" : "leyenda-colapsada"}`}
+      style={{
+        left: sidebarVisible ? "300px" : "16px", // 👈 mueve la leyenda
+      }}
+    >
+      <button className="btn-toggle" onClick={() => setAbierto(!abierto)}>
+        <span className="material-symbols-outlined text-gray-b">
           {abierto ? "expand_more" : "expand_less"}
         </span>
-        <span className="font-level-8 ">Leyenda</span>
+        <span className="font-level-8">Leyenda</span>
       </button>
+
       {abierto && (
         <ul className="lista-leyenda">
           {leyenda.map((item) => (

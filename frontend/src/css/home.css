@@ -105,7 +105,7 @@
   border-radius: 8px;
   font-size: 14px;
   color: var(--gray-a);
-  z-index: 999;
+  z-index: 999999;
 }
 
 .toast-mensaje button {

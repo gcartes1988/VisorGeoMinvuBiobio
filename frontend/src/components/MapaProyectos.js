@@ -10,6 +10,7 @@ import CapaParques from "./capas/CapaParques";
 
 function ResetViewButton({ center, zoom, limpiarCapas, position = "topright" }) {
   const map = useMap();
+
   useEffect(() => {
     const button = L.DomUtil.create("button", "leaflet-bar leaflet-control material-symbols-outlined");
     button.textContent = "refresh";
@@ -26,22 +27,29 @@ function ResetViewButton({ center, zoom, limpiarCapas, position = "topright" }) 
       justifyContent: "center",
       padding: "0",
     });
+
     const container = L.DomUtil.create("div", `leaflet-${position}`);
     container.appendChild(button);
     const ControlReset = L.Control.extend({ onAdd: () => container, onRemove: () => {} });
     const control = new ControlReset({ position });
     control.addTo(map);
+
     button.onclick = () => {
       map.setView(center, zoom);
       if (limpiarCapas) limpiarCapas();
     };
-    return () => { map.removeControl(control); };
+
+    return () => {
+      map.removeControl(control);
+    };
   }, [map, center, zoom, limpiarCapas, position]);
+
   return null;
 }
 
 function ToggleStyleButton({ estiloMapa, setEstiloMapa, position = "bottomright" }) {
   const map = useMap();
+
   useEffect(() => {
     const button = L.DomUtil.create("button", "leaflet-bar leaflet-control material-symbols-outlined");
     button.textContent = "contrast";
@@ -58,18 +66,24 @@ function ToggleStyleButton({ estiloMapa, setEstiloMapa, position = "bottomright"
       justifyContent: "center",
       padding: "0",
     });
+
     const container = L.DomUtil.create("div", `leaflet-${position}`);
     container.appendChild(button);
     const ControlStyle = L.Control.extend({ onAdd: () => container, onRemove: () => {} });
     const control = new ControlStyle({ position });
     control.addTo(map);
+
     button.onclick = () => setEstiloMapa(estiloMapa === "positron" ? "dark" : "positron");
-    return () => { map.removeControl(control); };
+
+    return () => {
+      map.removeControl(control);
+    };
   }, [map, estiloMapa, setEstiloMapa, position]);
+
   return null;
 }
 
-function MapaProyectos({ capas = [], limpiarCapas, sidebarMinimizada }) {
+function MapaProyectos({ capas = [], limpiarCapas, sidebarVisible }) {
   const [mapCenter, setMapCenter] = useState([-36.82, -73.05]);
   const initialZoom = 12;
   const [mapInstance, setMapInstance] = useState(null);
@@ -125,7 +139,8 @@ function MapaProyectos({ capas = [], limpiarCapas, sidebarMinimizada }) {
         return null;
       })}
 
-      {capas?.length > 0 && <LeyendaMapa sidebarMinimizada={sidebarMinimizada} />}
+      {/* ✅ Leyenda reacciona a la visibilidad del sidebar */}
+      {capas?.length > 0 && <LeyendaMapa sidebarVisible={sidebarVisible} />}
     </MapContainer>
   );
 }
