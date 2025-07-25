@@ -79,7 +79,7 @@ const ListaParques = () => {
               {parques.length > 0 ? (
                 parques.map((p) => (
                   <tr key={p.id}>
-                    <td><input type="checkbox" /></td>
+                    <td><input type="checkbox" disabled={perfil?.rol === "editor"} /></td>
                     <td>{p.nombre || "Sin nombre"}</td>
                     <td>{p.comuna?.nombre || "Sin comuna"}</td>
                     <td>{renderEstado(p.proyecto?.estado_proyecto)}</td>
@@ -90,15 +90,17 @@ const ListaParques = () => {
                             className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
                             onClick={() => p.editable && handleEditar(p.id)}
                             disabled={!p.editable}
-                            title={p.editable ? "Editar parque" : "Solo puede editar el creador o un admin"}
+                            title={p.editable ? "Editar parque" : "Solo puede editar el creador"}
                           >
                             <span className="material-symbols-outlined">edit</span>
                           </button>
-                          {perfil.rol === "admin" && (
+
+                          {(perfil.rol === "admin" || perfil.rol === "editor") && (
                             <button
-                              className="btn-icono btn-eliminar"
-                              onClick={() => handleEliminar(p.id)}
-                              title="Eliminar parque"
+                              className={`btn-icono btn-eliminar ${!p.editable ? "btn-disabled" : ""}`}
+                              onClick={() => p.editable && handleEliminar(p.id)}
+                              disabled={!p.editable}
+                              title={p.editable ? "Eliminar parque" : "Solo puede eliminar el creador"}
                             >
                               <span className="material-symbols-outlined">delete</span>
                             </button>
@@ -109,7 +111,9 @@ const ListaParques = () => {
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="5">No hay parques registrados.</td></tr>
+                <tr>
+                  <td colSpan="5">No hay parques registrados.</td>
+                </tr>
               )}
             </tbody>
           </table>

@@ -30,7 +30,10 @@ const ListaProyectos = () => {
   };
 
   const renderEstado = (estado) => {
-    const icon = estado === "aprobado" ? "check_circle" : estado === "pendiente" ? "schedule" : "cancel";
+    const icon = estado === "aprobado" ? "check_circle"
+               : estado === "pendiente" ? "schedule"
+               : "cancel";
+
     const clase = estado === "aprobado"
       ? "estado aprobado"
       : estado === "pendiente"
@@ -71,17 +74,29 @@ const ListaProyectos = () => {
               {proyectos.length > 0 ? (
                 proyectos.map((p) => (
                   <tr key={p.id}>
-                    <td><input type="checkbox" /></td>
+                    <td>
+                      <input type="checkbox" disabled={perfil?.rol === "editor"} />
+                    </td>
                     <td>{p.nombre}</td>
                     <td>{renderEstado(p.estado_proyecto)}</td>
                     {perfil?.rol !== "visitante" && (
                       <td>
                         <div className="btn-acciones">
-                          <button className="btn-icono" onClick={() => handleEditar(p.id)}>
+                          <button
+                            className={`btn-icono ${!p.editable ? "btn-disabled" : ""}`}
+                            onClick={() => p.editable && handleEditar(p.id)}
+                            disabled={!p.editable}
+                            title={p.editable ? "Editar proyecto" : "No tiene permisos para editar"}
+                          >
                             <span className="material-symbols-outlined">edit</span>
                           </button>
+
                           {perfil.rol === "admin" && (
-                            <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
+                            <button
+                              className="btn-icono btn-eliminar"
+                              onClick={() => handleEliminar(p.id)}
+                              title="Eliminar proyecto"
+                            >
                               <span className="material-symbols-outlined">delete</span>
                             </button>
                           )}

@@ -75,17 +75,36 @@ const GestionProyectos = () => {
                 {proyectos.length > 0 ? (
                   proyectos.map((p) => (
                     <tr key={p.id}>
-                      <td><input type="checkbox" /></td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          disabled={perfil?.rol === "editor"}
+                        />
+                      </td>
                       <td>{p.nombre}</td>
                       <td>{renderEstado(p.estado_proyecto)}</td>
                       {perfil?.rol !== "visitante" && (
                         <td>
                           <div className="btn-acciones">
-                            <button className="btn-icono" onClick={() => handleEditar(p.id)}>
+                            <button
+                              className="btn-icono"
+                              onClick={() => p.editable && handleEditar(p.id)}
+                              title={p.editable ? "Editar" : "No autorizado"}
+                              disabled={!p.editable}
+                              style={{
+                                cursor: p.editable ? "pointer" : "not-allowed",
+                                opacity: p.editable ? 1 : 0.5
+                              }}
+                            >
                               <span className="material-symbols-outlined">edit</span>
                             </button>
+
                             {perfil.rol === "admin" && (
-                              <button className="btn-icono btn-eliminar" onClick={() => handleEliminar(p.id)}>
+                              <button
+                                className="btn-icono btn-eliminar"
+                                onClick={() => handleEliminar(p.id)}
+                                title="Eliminar"
+                              >
                                 <span className="material-symbols-outlined">delete</span>
                               </button>
                             )}
