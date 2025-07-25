@@ -92,14 +92,16 @@ const ListaProyectos = () => {
                           </button>
 
                           {perfil.rol === "admin" && (
-                            <button
-                              className="btn-icono btn-eliminar"
-                              onClick={() => handleEliminar(p.id)}
-                              title="Eliminar proyecto"
-                            >
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
-                          )}
+                              <button
+                                className={`btn-icono btn-eliminar ${!p.editable ? "btn-disabled" : ""}`}
+                                onClick={() => p.editable && handleEliminar(p.id)}
+                                disabled={!p.editable}
+                                title={p.editable ? "Eliminar proyecto" : "Solo puede eliminar el creador"}
+                              >
+                                <span className="material-symbols-outlined">delete</span>
+                              </button>
+                            )}
+
                         </div>
                       </td>
                     )}

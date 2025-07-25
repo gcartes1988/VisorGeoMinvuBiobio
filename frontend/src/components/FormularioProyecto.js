@@ -188,8 +188,7 @@ const FormularioProyecto = ({ modoEdicion = false, proyectoId = null, onSuccess 
             const FormularioEspecifico = formularios[categoriaIdSeleccionada];
 
             return FormularioEspecifico ? (
-              <FormularioParque proyectoIdSeleccionado={proyectoSeleccionado.id} />
-
+              <FormularioEspecifico proyectoIdSeleccionado={proyectoSeleccionado.id} />
             ) : (
               <p className="text-orange">⚠️ Esta categoría aún no tiene un formulario implementado.</p>
             );
